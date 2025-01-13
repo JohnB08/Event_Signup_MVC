@@ -3,6 +3,7 @@ Dette er en del av kodehode fullstack undervisningen.
 Dette er et guidet prosjekt hvor vi ser på hvordan vi kan planlegge og sette opp et mvc prosjekt i helhet.
 Vi skal først planlegge og sketche ut så godt vi kan, utformingen, arkitekturen og utformingen vår så godt vi kan, før vi begynner å kode. 
 Det skal vi gjøre via en kombinasjon av pseudokoding og plantegning. 
+Vi skal jobbe i dette repoet sammen over flere uker for å få prosjektet på plass.
 
 
 ## Dag 1
