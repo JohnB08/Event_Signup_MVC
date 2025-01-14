@@ -78,3 +78,95 @@ sequenceDiagram
     ApiDefaultRoute ->>+ StaticFolder: Find index.html
     StaticFolder -->>- httpRequest: Serve Index.html
 ```
+
+2. Sekvens for eksisterende login token. 
+
+```mermaid
+sequenceDiagram
+    actor User
+    User ->>+ Index: Enters frontend
+    Index ->>+ CookieStorage: Look for login session
+    CookieStorage -->>- Index: Serve cookie
+    Index ->>+ LoginController: Update or refresh existing token.
+    LoginController -->>- CookieStorage: Store refreshed token. 
+```
+
+3. Sekvens for login hvor token ikke eksisterer.
+
+```mermaid
+sequenceDiagram
+    actor User
+    User ->>+ Index: Enters frontend
+    Index ->>+ CookieStorage: Look for login session
+    CookieStorage -->>- Index: No Existing token
+    Index ->>+ Login.html: Redirect to login.html
+    Login.html ->>+ LoginController: Serve Formdata containing username/password.
+    LoginController ->>+ LoginService: Hash incomming formdata.
+    LoginService ->>+ UserDataBase: Match data against existing user data.
+    UserDataBase -->>- LoginController: Return result of match.
+    LoginController -->>- CookieStorage: Store new token and redirect to index.html
+```
+
+4. Sekvens for hva en anonym bruker får av data fra eventController, og som kan bli vist på vår frontpage.
+
+```mermaid
+sequenceDiagram
+    actor AnonymousUser
+    AnonymousUser ->>+ EventController: /GET
+    EventController ->>+ DatabaseContext: Trigger Get Action for Public Events.
+    DatabaseContext ->>+ EventDatabase: Fetch Events Marked Public
+    EventDatabase -->>- DatabaseContext: Result of Fetch
+    DatabaseContext -->>- EventController: Public Events ordered by date (closest to currendDate first.)
+    EventController -->>- AnonymousUser: JsonData(result)
+```
+
+5. Sekvens for en logget inn user, hva de skal få servert av data til frontpage.
+
+```mermaid
+sequenceDiagram
+    actor LoggedInUser
+    LoggedInUser ->>+ EventController: /GET
+    EventController ->>+ DatabaseContext: Trigger Get Action on user events.
+    DatabaseContext ->>+ EventDatabase: Fetch Public Events.
+    DatabaseContext ->>+ EventDatabase: Fetch Events Where User is Admin.
+    DatabaseContext ->>+ EventDatabase: Fetch Events Where user is Owner.
+    DatabaseContext ->>+ EventDatabase: Fetch Events Where user is Signed up.
+    EventDatabase -->>- DatabaseContext: Return Result of SignedUpQuery.
+    EventDatabase -->>- DatabaseContext: Return Result of OwnerQuery.
+    EventDatabase -->>- DatabaseContext: Return Result of AdminQuery.
+    EventDatabase -->>- DatabaseContext: Return Result of Public Query.
+    DatabaseContext -->>- EventController: Return constructed DTO.
+    EventController -->>- LoggedInUser: Return Json(DTO).
+```
+
+6. Sekvens for å lage en ny event.
+
+```mermaid
+sequenceDiagram
+    actor LoggedInUser
+    LoggedInUser ->>+ EventController: /Post(jsonData)
+    EventController ->>+ DtoConstructor: Construct DTO based on Json Data from httpReq
+    DtoConstructor ->>+ DatabaseContext: Trigger new Post action with dto and LoggedInUser as Owner
+    DatabaseContext ->>+ EventDatabase: Post Event to database.
+    DatabaseContext ->>+ EventDatabase: Update Relationtable (Owner, event) with User and new event.
+    EventDatabase -->>- DatabaseContext: Ok Response
+    EventDatabase -->>- DatabaseContext: Ok Response
+    DatabaseContext -->-EventController: Ok Reponse
+    EventController -->- LoggedInUser: CreatedAtResponse
+```
+
+7. Sekvens for å signe up til en event.
+
+```mermaid
+sequenceDiagram
+    actor LoggedInUser
+    LoggedInUser ->>+ EventController: /Post -> /SignUp/{id}
+    EventController ->>+ DatabaseContext: Check for event with id {id}
+    DatabaseContext ->>+ EventDatabase: Check for event with id {id}
+    DatabaseContext -->>+ EventController: Error if no event
+    EventController -->>+ LoggedInUser: Return 404NotFound
+    DatabaseContext ->>+ EventDatabase: Update Relation SignedUp with (user, event)
+    EventDatabase -->>- DatabaseContext: Return OK Result
+    DatabaseContext -->>- EventController: Return OK Result
+    EventController -->>- LoggedInUser: Return CreatedAt Result
+```
