@@ -66,3 +66,15 @@ Vi ønsker å utføre arbeidet vårt via en .NET backend, en sqlite database som
  - Vi skal lage en separat login side, som getter login sin html, og kan Poste brukernavn og passord via en htmlform til login controlleren vår. Her skal vi og redirekte tilbake til "home" ved en suksessfull login. 
  - Vi skal følge moderne stiltyper, for oppsett av css. 
  - Vi skal følge standarder for semnatisk html.
+
+
+ ## Sekvensdiagrammer:
+
+1. Default Route til api, standard /GET:
+
+```mermaid
+sequenceDiagram
+    httpRequest ->>+ ApiDefaultRoute: /GET
+    ApiDefaultRoute ->>+ StaticFolder: Find index.html
+    StaticFolder -->>- httpRequest: Serve Index.html
+```
