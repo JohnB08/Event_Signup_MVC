@@ -220,8 +220,8 @@ sequenceDiagram
     User ->>+ EventController: /PATCH /{id} (jsonData)
     EventController ->>+ AuthorizationService: Check if user is admin or owner of event
     alt User has editing privileges
-        AuthorizationService -->>- EventController: Authorized
-        EventController ->>+ DtoConstructor: Validate and construct DTO from jsonData
+        AuthorizationService -->> EventController: Authorized
+        EventController ->> DtoConstructor: Validate and construct DTO from jsonData
         alt DTO validation succeeds
             DtoConstructor ->> DatabaseContext: Pass DTO and Event ID for update
             DatabaseContext ->> EventDatabase: Update event with new data
@@ -229,8 +229,8 @@ sequenceDiagram
             DatabaseContext -->> EventController: Success response
             EventController -->> User: HTTP 200 OK with updated event details
         else DTO validation fails
-            DtoConstructor -->>- EventController: Validation error
-            EventController -->>- User: HTTP 400 Bad Request with error message
+            DtoConstructor -->> EventController: Validation error
+            EventController -->> User: HTTP 400 Bad Request with error message
         end
     else User lacks privileges
         AuthorizationService -->>- EventController: Unauthorized
