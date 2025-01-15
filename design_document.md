@@ -79,16 +79,26 @@ sequenceDiagram
     StaticFolder -->>- httpRequest: Serve Index.html
 ```
 
-2. Sekvens for eksisterende login token. 
+2. Sekvens for eksisterende login token. En skjekk som gjennomføres når vi entrer siden.
 
 ```mermaid
 sequenceDiagram
     actor User
-    User ->>+ Index: Enters frontend
-    Index ->>+ CookieStorage: Look for login session
-    CookieStorage -->>- Index: Serve cookie
-    Index ->>+ LoginController: Update or refresh existing token.
-    LoginController -->>- CookieStorage: Store refreshed token. 
+    participant View(Index)
+    participant LoginController
+    participant LoginService
+    participant UserDatabase
+
+    User ->>+ View(Index): "Enters Index View"
+    View(Index) ->>+ LoginService: "Checks for existing token in cookies"
+    LoginService ->>+ UserDatabase: "Validates token"
+    UserDatabase -->>- LoginService: "Returns validation result"
+    LoginService -->>- View(Index): "Sends validation status (valid/invalid)"
+    alt Token is valid
+        View(Index) -->> User: "Displays authenticated view"
+    else Token is invalid or absent
+        View(Index) ->>+ User: "Display UnAuthenticated(anonymous) view"
+    end
 ```
 
 3. Sekvens for login hvor token ikke eksisterer.
@@ -96,77 +106,172 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     actor User
-    User ->>+ Index: Enters frontend
-    Index ->>+ CookieStorage: Look for login session
-    CookieStorage -->>- Index: No Existing token
-    Index ->>+ Login.html: Redirect to login.html
-    Login.html ->>+ LoginController: Serve Formdata containing username/password.
-    LoginController ->>+ LoginService: Hash incomming formdata.
-    LoginService ->>+ UserDataBase: Match data against existing user data.
-    UserDataBase -->>- LoginController: Return result of match.
-    LoginController -->>- CookieStorage: Store new token and redirect to index.html
+    participant View(Index)
+    participant View(Login)
+    participant LoginController
+    participant LoginService
+    participant UserDatabase
+
+    User ->>+ View(Index): "Clicks Login"
+    View(Index) ->>+ View(Login): "Redirects to Login View"
+    View(Login) ->>+ LoginController: "Submits username and password /POST"
+    LoginController ->>+ LoginService: "Triggers login action"
+    LoginService ->>+ UserDatabase: "Validates credentials (hashed formData)"
+    UserDatabase -->>- LoginService: "Returns validation result"
+    alt Credentials are valid
+        LoginService -->>- LoginController: "Returns success with token"
+        LoginController -->>- View(Login): "Responds with success and token"
+        View(Login) -->>- User: "Displays success message and authenticated view"
+    else Credentials are invalid
+        LoginService -->>- LoginController: "Returns error"
+        LoginController -->>- View(Login): "Responds with error"
+        View(Login) -->>- User: "Displays error feedback"
+    end
 ```
 
-4. Sekvens for hva en anonym bruker får av data fra eventController, og som kan bli vist på vår frontpage.
+4. Sekvens for å lage en ny user.
 
 ```mermaid
 sequenceDiagram
     actor AnonymousUser
-    AnonymousUser ->>+ EventController: /GET
-    EventController ->>+ DatabaseContext: Trigger Get Action for Public Events.
-    DatabaseContext ->>+ EventDatabase: Fetch Events Marked Public
-    EventDatabase -->>- DatabaseContext: Result of Fetch
-    DatabaseContext -->>- EventController: Public Events ordered by date (closest to currendDate first.)
-    EventController -->>- AnonymousUser: JsonData(result)
+    participant LoginController
+    participant LoginService
+    participant UserDatabase
+
+    AnonymousUser ->>+ LoginController: /POST /New (formData)
+    LoginController ->>+ LoginService: Validate existence of required fields, and hash.
+    alt validation succeeds
+        LoginService ->>+ UserDatabase: Insert new hashed user data into the database
+        UserDatabase -->>- LoginService: OK (User created)
+        LoginService -->>- LoginController: Success response
+        LoginController -->>- AnonymousUser: HTTP 201 Created (New user created)
+    else validation fails
+        LoginService -->>- LoginController: Validation error
+        LoginController -->>- AnonymousUser: HTTP 400 Bad Request with error message
+    end
 ```
 
-5. Sekvens for en logget inn user, hva de skal få servert av data til frontpage.
+5. Sekvens for å hente eventdata til hovedsiden når en bruker entrer defaultRoute.
 
 ```mermaid
 sequenceDiagram
-    actor LoggedInUser
-    LoggedInUser ->>+ EventController: /GET
-    EventController ->>+ DatabaseContext: Trigger Get Action on user events.
-    DatabaseContext ->>+ EventDatabase: Fetch Public Events.
-    DatabaseContext ->>+ EventDatabase: Fetch Events Where User is Admin.
-    DatabaseContext ->>+ EventDatabase: Fetch Events Where user is Owner.
-    DatabaseContext ->>+ EventDatabase: Fetch Events Where user is Signed up.
-    EventDatabase -->>- DatabaseContext: Return Result of SignedUpQuery.
-    EventDatabase -->>- DatabaseContext: Return Result of OwnerQuery.
-    EventDatabase -->>- DatabaseContext: Return Result of AdminQuery.
-    EventDatabase -->>- DatabaseContext: Return Result of Public Query.
-    DatabaseContext -->>- EventController: Return constructed DTO.
-    EventController -->>- LoggedInUser: Return Json(DTO).
+    actor User
+    participant EventController
+    participant DatabaseContext
+    participant EventDatabase
+
+    User ->>+ EventController: /GET request
+    EventController ->>+ DatabaseContext: Trigger fetch for public events
+    DatabaseContext ->>+ EventDatabase: Fetch events marked as public
+    EventDatabase -->>- DatabaseContext: Return public events
+
+    alt User is authenticated
+        EventController ->>+ DatabaseContext: Trigger fetch for user-specific events
+        DatabaseContext ->>+ EventDatabase: Fetch events where user is owner
+        DatabaseContext ->>+ EventDatabase: Fetch events where user is admin
+        DatabaseContext ->>+ EventDatabase: Fetch events where user is signed up
+        EventDatabase -->>- DatabaseContext: Return owner events
+        EventDatabase -->>- DatabaseContext: Return admin events
+        EventDatabase -->>- DatabaseContext: Return signed-up events
+        DatabaseContext -->>- EventController: Combine public and user-specific events
+        EventController -->>- User: Return JSON (DTO with public and user-specific events)
+    else User is anonymous
+    DatabaseContext -->>- EventController: Return public events only
+        EventController -->>- User: Return JSON (DTO with public events)
+    end
 ```
 
 6. Sekvens for å lage en ny event.
 
 ```mermaid
 sequenceDiagram
-    actor LoggedInUser
-    LoggedInUser ->>+ EventController: /Post(jsonData)
-    EventController ->>+ DtoConstructor: Construct DTO based on Json Data from httpReq
-    DtoConstructor ->>+ DatabaseContext: Trigger new Post action with dto and LoggedInUser as Owner
-    DatabaseContext ->>+ EventDatabase: Post Event to database.
-    DatabaseContext ->>+ EventDatabase: Update Relationtable (Owner, event) with User and new event.
-    EventDatabase -->>- DatabaseContext: Ok Response
-    EventDatabase -->>- DatabaseContext: Ok Response
-    DatabaseContext -->-EventController: Ok Reponse
-    EventController -->- LoggedInUser: CreatedAtResponse
+    actor User
+    participant EventController
+    participant DtoConstructor
+    participant DatabaseContext
+    participant EventDatabase
+
+    User ->>+ EventController: /POST /(jsonData)
+    EventController ->>+ DtoConstructor: Validate and construct DTO from jsonData
+    alt DTO validation succeeds
+        DtoConstructor ->>+ DatabaseContext: Pass DTO with User as Owner
+        DatabaseContext ->>+ EventDatabase: Insert event into database
+        DatabaseContext ->>+ EventDatabase: Update relation table (Owner, Event)
+        EventDatabase -->>- DatabaseContext: OK (Event created)
+        EventDatabase -->>- DatabaseContext: OK (Relation updated)
+        DatabaseContext -->>- EventController: Success response
+        EventController -->>- User: HTTP 201 Created with location of new event
+    else DTO validation fails
+        DtoConstructor -->>- EventController: Validation error
+        EventController -->>- User: HTTP 400 Bad Request with error message
+    end
 ```
 
-7. Sekvens for å signe up til en event.
+7. Sekvens for å Edite et event. 
+```mermaid
+sequenceDiagram
+    actor User
+    participant EventController
+    participant AuthorizationService
+    participant DtoConstructor
+    participant DatabaseContext
+    participant EventDatabase
+
+    User ->>+ EventController: /PATCH /{id} (jsonData)
+    EventController ->>+ AuthorizationService: Check if user is admin or owner of event
+    alt User has editing privileges
+        AuthorizationService -->>- EventController: Authorized
+        EventController ->>+ DtoConstructor: Validate and construct DTO from jsonData
+        alt DTO validation succeeds
+            DtoConstructor ->>+ DatabaseContext: Pass DTO and Event ID for update
+            DatabaseContext ->>+ EventDatabase: Update event with new data
+            EventDatabase -->>- DatabaseContext: OK (Event updated)
+            DatabaseContext -->>- EventController: Success response
+            EventController -->>- User: HTTP 200 OK with updated event details
+        else DTO validation fails
+            DtoConstructor -->>- EventController: Validation error
+            EventController -->>- User: HTTP 400 Bad Request with error message
+        end
+    else User lacks privileges
+        AuthorizationService -->>- EventController: Unauthorized
+        EventController -->>- User: HTTP 403 Forbidden with error message
+    end
+```
+
+8. Sekvens for å signe up til en event.
 
 ```mermaid
 sequenceDiagram
-    actor LoggedInUser
-    LoggedInUser ->>+ EventController: /Post -> /SignUp/{id}
-    EventController ->>+ DatabaseContext: Check for event with id {id}
-    DatabaseContext ->>+ EventDatabase: Check for event with id {id}
-    DatabaseContext -->>+ EventController: Error if no event
-    EventController -->>+ LoggedInUser: Return 404NotFound
-    DatabaseContext ->>+ EventDatabase: Update Relation SignedUp with (user, event)
-    EventDatabase -->>- DatabaseContext: Return OK Result
-    DatabaseContext -->>- EventController: Return OK Result
-    EventController -->>- LoggedInUser: Return CreatedAt Result
+    actor User
+    participant EventController
+    participant AuthorizationService
+    participant DatabaseContext
+    participant EventDatabase
+
+    User ->>+ EventController: /POST /Signup/{id} (signup request)
+    EventController ->>+ AuthorizationService: Validate if event is public or user has privileges (admin, owner, or existing participant)
+    alt Event is public or user has privileges
+        AuthorizationService -->>- EventController: Authorized
+        EventController ->>+ DatabaseContext: Insert user-event relation (signup action)
+        DatabaseContext ->>+ EventDatabase: Add entry to participant relation table
+        EventDatabase -->>- DatabaseContext: OK (User successfully signed up)
+        DatabaseContext -->>- EventController: Success response
+        EventController -->>- User: HTTP 201 Created (Signup successful)
+    else User lacks privileges or event is restricted
+        AuthorizationService -->>- EventController: Unauthorized
+        EventController -->>- User: HTTP 403 Forbidden (Signup not allowed)
+    end
 ```
+
+Vi følger prinsippet /Area/Controller/Action/Parameter url prinsippet når det kommer til Routing.<br>
+Det vil si, sekvenser knyttet til EventController har url: api.com/Event/...<br>
+Sekvenser knyttet til LoginController har url: api.com/Login/... <br>
+<br>
+
+Endepunktene brukt i sekvensdiagrammet er ikke endelige, men representerer godt hva forventningene til backendfunksjonaliteten er for hvert endepunkt:
+ - /GET til EventController viser tydlig at vi vil hente data for eventer knyttet til en (potensiell anonym) bruker.
+ - /POST til EventController viser tydlig at vi skal Legge til et nytt event.
+ - /PATCH/{id} til eventController viser tydlig at vi vil edite/Patche data til en spesifik event med id == {id}.
+ - /POST til EventController sin /Signup/{id} action viser tydlig at vi vil poste en ny relation mellom en bruker som "signee" eller "subscriber" og en event. 
+ - /POST til LoginController Poster en loginrequest.
+ - /Post til LoginController /New poster Ny brukerdata til loginController.
