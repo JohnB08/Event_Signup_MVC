@@ -119,9 +119,9 @@ sequenceDiagram
     LoginService ->>+ UserDatabase: "Validates credentials (hashed formData)"
     UserDatabase -->>- LoginService: "Returns validation result"
     alt Credentials are valid
-        LoginService -->>- LoginController: "Returns success with token"
-        LoginController -->>- View(Login): "Responds with success and token"
-        View(Login) -->>- User: "Displays success message and authenticated view"
+        LoginService -->> LoginController: "Returns success with token"
+        LoginController -->> View(Login): "Responds with success and token"
+        View(Login) -->> User: "Displays success message and authenticated view"
     else Credentials are invalid
         LoginService -->>- LoginController: "Returns error"
         LoginController -->>- View(Login): "Responds with error"
@@ -141,10 +141,10 @@ sequenceDiagram
     AnonymousUser ->>+ LoginController: /POST /New (formData)
     LoginController ->>+ LoginService: Validate existence of required fields, and hash.
     alt validation succeeds
-        LoginService ->>+ UserDatabase: Insert new hashed user data into the database
-        UserDatabase -->>- LoginService: OK (User created)
-        LoginService -->>- LoginController: Success response
-        LoginController -->>- AnonymousUser: HTTP 201 Created (New user created)
+        LoginService ->> UserDatabase: Insert new hashed user data into the database
+        UserDatabase -->> LoginService: OK (User created)
+        LoginService -->> LoginController: Success response
+        LoginController -->> AnonymousUser: HTTP 201 Created (New user created)
     else validation fails
         LoginService -->>- LoginController: Validation error
         LoginController -->>- AnonymousUser: HTTP 400 Bad Request with error message
@@ -166,15 +166,15 @@ sequenceDiagram
     EventDatabase -->>- DatabaseContext: Return public events
 
     alt User is authenticated
-        EventController ->>+ DatabaseContext: Trigger fetch for user-specific events
-        DatabaseContext ->>+ EventDatabase: Fetch events where user is owner
-        DatabaseContext ->>+ EventDatabase: Fetch events where user is admin
-        DatabaseContext ->>+ EventDatabase: Fetch events where user is signed up
-        EventDatabase -->>- DatabaseContext: Return owner events
-        EventDatabase -->>- DatabaseContext: Return admin events
-        EventDatabase -->>- DatabaseContext: Return signed-up events
-        DatabaseContext -->>- EventController: Combine public and user-specific events
-        EventController -->>- User: Return JSON (DTO with public and user-specific events)
+        EventController ->> DatabaseContext: Trigger fetch for user-specific events
+        DatabaseContext ->> EventDatabase: Fetch events where user is owner
+        DatabaseContext ->> EventDatabase: Fetch events where user is admin
+        DatabaseContext ->> EventDatabase: Fetch events where user is signed up
+        EventDatabase -->> DatabaseContext: Return owner events
+        EventDatabase -->> DatabaseContext: Return admin events
+        EventDatabase -->> DatabaseContext: Return signed-up events
+        DatabaseContext -->> EventController: Combine public and user-specific events
+        EventController -->> User: Return JSON (DTO with public and user-specific events)
     else User is anonymous
     DatabaseContext -->>- EventController: Return public events only
         EventController -->>- User: Return JSON (DTO with public events)
@@ -194,13 +194,13 @@ sequenceDiagram
     User ->>+ EventController: /POST /(jsonData)
     EventController ->>+ DtoConstructor: Validate and construct DTO from jsonData
     alt DTO validation succeeds
-        DtoConstructor ->>+ DatabaseContext: Pass DTO with User as Owner
-        DatabaseContext ->>+ EventDatabase: Insert event into database
-        DatabaseContext ->>+ EventDatabase: Update relation table (Owner, Event)
-        EventDatabase -->>- DatabaseContext: OK (Event created)
-        EventDatabase -->>- DatabaseContext: OK (Relation updated)
-        DatabaseContext -->>- EventController: Success response
-        EventController -->>- User: HTTP 201 Created with location of new event
+        DtoConstructor ->> DatabaseContext: Pass DTO with User as Owner
+        DatabaseContext ->> EventDatabase: Insert event into database
+        DatabaseContext ->> EventDatabase: Update relation table (Owner, Event)
+        EventDatabase -->> DatabaseContext: OK (Event created)
+        EventDatabase -->> DatabaseContext: OK (Relation updated)
+        DatabaseContext -->> EventController: Success response
+        EventController -->> User: HTTP 201 Created with location of new event
     else DTO validation fails
         DtoConstructor -->>- EventController: Validation error
         EventController -->>- User: HTTP 400 Bad Request with error message
@@ -223,11 +223,11 @@ sequenceDiagram
         AuthorizationService -->>- EventController: Authorized
         EventController ->>+ DtoConstructor: Validate and construct DTO from jsonData
         alt DTO validation succeeds
-            DtoConstructor ->>+ DatabaseContext: Pass DTO and Event ID for update
-            DatabaseContext ->>+ EventDatabase: Update event with new data
-            EventDatabase -->>- DatabaseContext: OK (Event updated)
-            DatabaseContext -->>- EventController: Success response
-            EventController -->>- User: HTTP 200 OK with updated event details
+            DtoConstructor ->> DatabaseContext: Pass DTO and Event ID for update
+            DatabaseContext ->> EventDatabase: Update event with new data
+            EventDatabase -->> DatabaseContext: OK (Event updated)
+            DatabaseContext -->> EventController: Success response
+            EventController -->> User: HTTP 200 OK with updated event details
         else DTO validation fails
             DtoConstructor -->>- EventController: Validation error
             EventController -->>- User: HTTP 400 Bad Request with error message
@@ -251,12 +251,12 @@ sequenceDiagram
     User ->>+ EventController: /POST /Signup/{id} (signup request)
     EventController ->>+ AuthorizationService: Validate if event is public or user has privileges (admin, owner, or existing participant)
     alt Event is public or user has privileges
-        AuthorizationService -->>- EventController: Authorized
-        EventController ->>+ DatabaseContext: Insert user-event relation (signup action)
-        DatabaseContext ->>+ EventDatabase: Add entry to participant relation table
-        EventDatabase -->>- DatabaseContext: OK (User successfully signed up)
-        DatabaseContext -->>- EventController: Success response
-        EventController -->>- User: HTTP 201 Created (Signup successful)
+        AuthorizationService -->> EventController: Authorized
+        EventController ->> DatabaseContext: Insert user-event relation (signup action)
+        DatabaseContext ->> EventDatabase: Add entry to participant relation table
+        EventDatabase -->> DatabaseContext: OK (User successfully signed up)
+        DatabaseContext -->> EventController: Success response
+        EventController -->> User: HTTP 201 Created (Signup successful)
     else User lacks privileges or event is restricted
         AuthorizationService -->>- EventController: Unauthorized
         EventController -->>- User: HTTP 403 Forbidden (Signup not allowed)
