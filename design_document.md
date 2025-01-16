@@ -39,8 +39,11 @@ Vi ønsker å utføre arbeidet vårt via en .NET backend, en sqlite database som
  - Vi lager modeller for all data:
     1. Brukere.
     2. Eventer.
-    3. BrukerDTO.
-    4. EventDTO.
+    3. SignupRelasjoner.
+    4. AdminRelasjoner.
+    5. OwnerRelasjoner.
+    6. BrukerDTO.
+    7. EventDTO.
  - Vi bruker DTO (data transfer objects) for å flytte data fra forskjellige requests til data som matcher databasemodellene vår. 
  - Vi lager en controller for å hente ut brukerdata. Og en kontroller for å hente ut Event Data.
     - Dette for å gi oss god oversikt over, og klar separasjon mellom, de forskjellige metodene og servicene som brukes av hver.
@@ -262,6 +265,49 @@ sequenceDiagram
         EventController -->>- User: HTTP 403 Forbidden (Signup not allowed)
     end
 ```
+
+## Entitetsrelasjonsdiagram
+
+```mermaid
+erDiagram
+    User {
+        int UserId
+        string UserName
+        string HashPassword
+    }
+    Event {
+        int EventId
+        string EventName
+        DateTime EventDate
+        bool Public
+    }
+    UserSignupEventRelations{
+        int UserId
+        int EventId
+    }
+    UserAdminEventRelations{
+        int UserId
+        int EventId
+    }
+    UserOwnerEventRelation{
+        int UserId
+        int EventId
+    }
+    User ||--o| UserSignupEventRelations: "En User"
+    UserSignupEventRelations ||--o{ Event: "Mange events"
+    User ||--o| UserAdminEventRelations: "En User"
+    UserAdminEventRelations ||--o{ Event: "Mange events"
+    User ||--o| UserOwnerEventRelation: "En User"
+    UserOwnerEventRelation ||--o| Event: "En event"
+```
+
+Vi lager relasjonstabeller som skal holde oversikt over hvilken bruker som har en relasjon til hvilken event.
+ - User 1..n UserSignupEventRelations n..m Event
+ - User 1..n UserAdminEventRelations n..m Event
+ - User 1..1 UserOwnerEventRelation 1..1 Event
+
+
+## Routing
 
 Vi følger prinsippet /Area/Controller/Action/Parameter url prinsippet når det kommer til Routing.<br>
 Det vil si, sekvenser knyttet til EventController har url: api.com/Event/...<br>
