@@ -280,6 +280,7 @@ erDiagram
         string EventName
         DateTime EventDate
         bool Public
+        int GenreId
     }
     UserSignupEventRelations{
         int UserId
