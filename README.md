@@ -10,3 +10,16 @@ Vi skal jobbe i dette repoet sammen over flere uker for å få prosjektet på pl
  - Vi gikk gjennom hvorfor det er viktig å planlegge et stort prosjekt, og gikk gjennom i felles og laget et førsteutkast for et designdokument.
  - Vi satt opp krav til prosjektet, både front-end og back-end, så godt vi kunne.
  - Vi så på forskjellige muligheter og ønsker vi vil oppnå, og laget en generell plan for gjennomførelse.
+
+ ## Dag 4
+ - Vi så på templaten
+ - Vi laget modeller basert på ERDiagrammet vårt i planen, vi endret noen av de, men husket å endre ERDiagrammet vårt for å reflektere endringene vi gjorde.
+ - Vi installerte EFCore via følgende kommandolinjeoperasjoner:
+    1. Vi initierte et nytt tool-manifest, slik at vi kan installere egne cli verktøy kun til dette prosjektet via `dotnet new tool-manifest`
+    2. Vi instalerte entity framework cli verktøy via `dotnet tool install dotnet-ef`
+    3. Vi installerte entity framework for sqlite via `dotnet add package Microsoft.EntityFrameworkCore.Sqlite`
+    4. Vi installerte entity framework verktøyene via `dotnet add package Microsoft.EntityFrameworkCore.Tools`
+    5. Vi installerte verktøy for å håndtere schemadesign via `dotnet add package Microsoft.EntityFrameworkCore.Design`
+ - Vi laget en DatabaseContext fil, som skal holde databaseconteksten i dataminnet.
+ - vi la til databasecontexten som en service i Builderen vår i Program.cs, slik at den kan brukes og injekteres inn i andre controllers og services.
+ - Vi la til en enkel hjelpemetode (EnsureCreated) for å se at databasefilen vår kan bli generert av schemafilene, her skal vi skifte ut med migrering.
