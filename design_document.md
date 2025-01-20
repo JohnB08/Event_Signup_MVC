@@ -293,12 +293,17 @@ erDiagram
         int UserId
         int EventId
     }
+    EventGenreLookupTable{
+        int Id
+        string Genre
+    }
     User ||--o| UserSignupEventRelations: "En User"
     UserSignupEventRelations ||--o{ Event: "Mange events"
     User ||--o| UserAdminEventRelations: "En User"
     UserAdminEventRelations ||--o{ Event: "Mange events"
     User ||--o| UserOwnerEventRelation: "En User"
     UserOwnerEventRelation ||--o| Event: "En event"
+    Event ||--o| EventGenreLookupTable: "En sjanger"
 ```
 
 Vi lager relasjonstabeller som skal holde oversikt over hvilken bruker som har en relasjon til hvilken event.
