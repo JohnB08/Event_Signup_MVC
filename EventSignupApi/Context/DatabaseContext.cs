@@ -14,13 +14,26 @@ public class DatabaseContext: DbContext
     DbSet<Event> Events{get;set;}
     DbSet<User> Users{get;set;}
     DbSet<EventGenreLookupTable> EventGenreLookup{get;set;}
-    DbSet<UserAdminEventRelation> UserAdminEventRelations{get;set;}
-    DbSet<UserOwnerEventRelation> UserOwnerEventRelations {get;set;}
-    DbSet<UserSignupEventRelation> UserSignupEventRelations {get;set;}
     /* Her lager vi en Override av OnConfiguring metoden til DbContext, som i vår builder, sier at EfCore skal knyttes til en sqlite Database. */
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         /* Data Source representerer hvor metoden skal finne / lage databasefilen. */
-        optionsBuilder.UseSqlite("Data Source=Database/EventDatabase.db");
+        optionsBuilder.UseSqlite("Data Source=Database/EventDatabase.db; foreign keys=true;");
+    }
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Event>()
+            .HasOne(e => e.Genre)
+            .WithMany(g =>  g.Events)
+            .HasForeignKey(e => e.GenreId);
+        modelBuilder.Entity<Event>()
+            .HasOne(e=>e.Owner)
+            .WithOne(o => o.OwnedEvent);
+        modelBuilder.Entity<Event>()
+            .HasMany(e => e.Admins)
+            .WithMany(a => a.AdminEvents);
+        modelBuilder.Entity<Event>()
+            .HasMany(e => e.SignUps)
+            .WithMany(s => s.SignUpEvents);
     }
 }

@@ -20,13 +20,6 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-/* Her har vi en ekstra hjelpemetode som dobbeltskjekker at databasefilen eksisterer. Denne vil etterhvert bli skiftet ut av migreringer av schema.  */
-using (var context = new DatabaseContext())
-{
-    context.Database.EnsureCreated();
-    Console.WriteLine("Database is created");
-}
-
 app.UseHttpsRedirection();
 
 app.UseAuthorization();

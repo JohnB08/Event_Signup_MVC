@@ -274,6 +274,9 @@ erDiagram
         int UserId
         string UserName
         string HashPassword
+        int EventId
+        set SignupEvents
+        set AdminEvents
     }
     Event {
         int EventId
@@ -281,29 +284,17 @@ erDiagram
         DateTime EventDate
         bool Public
         int GenreId
-    }
-    UserSignupEventRelations{
         int UserId
-        int EventId
-    }
-    UserAdminEventRelations{
-        int UserId
-        int EventId
-    }
-    UserOwnerEventRelation{
-        int UserId
-        int EventId
+        set Signups
+        set Admins
     }
     EventGenreLookupTable{
         int Id
         string Genre
     }
-    User ||--o| UserSignupEventRelations: "En User"
-    UserSignupEventRelations ||--o{ Event: "Mange events"
-    User ||--o| UserAdminEventRelations: "En User"
-    UserAdminEventRelations ||--o{ Event: "Mange events"
-    User ||--o| UserOwnerEventRelation: "En User"
-    UserOwnerEventRelation ||--o| Event: "En event"
+    User ||--o| Event: "En EventId En UserId som Owner"
+    User }|--|{ Event: "Mange AdminEvents, Mange Admins"
+    User }|--|{ Event: "Mange SignupEvents, Mange Signups"
     Event ||--o| EventGenreLookupTable: "En sjanger"
 ```
 
