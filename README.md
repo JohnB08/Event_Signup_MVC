@@ -23,3 +23,11 @@ Vi skal jobbe i dette repoet sammen over flere uker for å få prosjektet på pl
  - Vi laget en DatabaseContext fil, som skal holde databaseconteksten i dataminnet.
  - vi la til databasecontexten som en service i Builderen vår i Program.cs, slik at den kan brukes og injekteres inn i andre controllers og services.
  - Vi la til en enkel hjelpemetode (EnsureCreated) for å se at databasefilen vår kan bli generert av schemafilene, her skal vi skifte ut med migrering.
+
+
+ ## Dag 5
+ - Vi repeterte litt om hvorfor vi har modellert som vi har
+ - Vi begynte å implementere controllers.
+   1. Vi laget først simple endepunkter som kunne get og post til /event
+   2. Vi laget et event dto objekt, som representerer tenkt data postet av en bruker.
+   3. Vi traff noen problemer når vi skulle knytte relasjoner mellom en bruker og et event, kanskje vi bør lage en robust relationHandler eller relationService for å håndtere dette?
