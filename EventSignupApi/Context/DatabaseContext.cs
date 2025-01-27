@@ -11,9 +11,9 @@ public class DatabaseContext: DbContext
     /* DbSet representerer en tabell i vår database som heter Events. I vår context kan vi se på det som en liste av Event objekter. 
     Dette er hovedkjernen til funksjonen til en O R M, å Mappe Relations mellom Objekter i dataminnet og Objekter på databasen.
     I dette tilfellet knytte en relation mellom et Table på databasen Events, og en liste over Event objekter som heter Events.*/
-    DbSet<Event> Events{get;set;}
-    DbSet<User> Users{get;set;}
-    DbSet<EventGenreLookupTable> EventGenreLookup{get;set;}
+    public DbSet<Event> Events{get;set;}
+    public DbSet<User> Users{get;set;}
+    public DbSet<EventGenreLookupTable> EventGenreLookup{get;set;}
     /* Her lager vi en Override av OnConfiguring metoden til DbContext, som i vår builder, sier at EfCore skal knyttes til en sqlite Database. */
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
