@@ -26,7 +26,8 @@ public class DTOService
             EventName = returnEvent.EventName,
             Date = returnEvent.EventDate.ToString(),
             Public = returnEvent.Public,
-            Genre = returnEvent.Genre.Genre
+            Genre = returnEvent.Genre.Genre,
+            UserId = returnEvent.UserId
         };
         return dto;
     }
