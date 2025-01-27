@@ -9,7 +9,7 @@ namespace EventSignupApi.Controllers
 {
     [Route("api/[controller]")]//localhost:3500/api/event
     [ApiController]
-    public class EventController(DatabaseContext context, ILogger<EventController> logger, DTOService dtoService, EventRelationService eventRelationService) : ControllerBase
+    public class EventController( ILogger<EventController> logger, EventRelationService eventRelationService) : ControllerBase
     {
         private readonly ILogger _logger = logger;
         private readonly EventRelationService _eventRealtionService = eventRelationService;
