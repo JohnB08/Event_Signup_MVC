@@ -190,14 +190,14 @@ sequenceDiagram
 sequenceDiagram
     actor User
     participant EventController
-    participant DtoConstructor
+    participant EventHandler
     participant DatabaseContext
     participant EventDatabase
 
     User ->>+ EventController: /POST /(jsonData)
-    EventController ->>+ DtoConstructor: Validate and construct DTO from jsonData
+    EventController ->>+ EventHandler: Validate and construct DTO from jsonData
     alt DTO validation succeeds
-        DtoConstructor ->> DatabaseContext: Pass DTO with User as Owner
+        EventHandler ->> DatabaseContext: Pass DTO with User as Owner
         DatabaseContext ->> EventDatabase: Insert event into database
         DatabaseContext ->> EventDatabase: Update relation table (Owner, Event)
         EventDatabase -->> DatabaseContext: OK (Event created)
@@ -205,7 +205,7 @@ sequenceDiagram
         DatabaseContext -->> EventController: Success response
         EventController -->> User: HTTP 201 Created with location of new event
     else DTO validation fails
-        DtoConstructor -->>- EventController: Validation error
+        EventHandler -->>- EventController: Validation error
         EventController -->>- User: HTTP 400 Bad Request with error message
     end
 ```
@@ -216,7 +216,7 @@ sequenceDiagram
     actor User
     participant EventController
     participant AuthorizationService
-    participant DtoConstructor
+    participant EventHandler
     participant DatabaseContext
     participant EventDatabase
 
@@ -224,15 +224,15 @@ sequenceDiagram
     EventController ->>+ AuthorizationService: Check if user is admin or owner of event
     alt User has editing privileges
         AuthorizationService -->> EventController: Authorized
-        EventController ->> DtoConstructor: Validate and construct DTO from jsonData
+        EventController ->> EventHandler: Validate and construct DTO from jsonData
         alt DTO validation succeeds
-            DtoConstructor ->> DatabaseContext: Pass DTO and Event ID for update
+            EventHandler ->> DatabaseContext: Pass DTO and Event ID for update
             DatabaseContext ->> EventDatabase: Update event with new data
             EventDatabase -->> DatabaseContext: OK (Event updated)
             DatabaseContext -->> EventController: Success response
             EventController -->> User: HTTP 200 OK with updated event details
         else DTO validation fails
-            DtoConstructor -->> EventController: Validation error
+            EventHandler -->> EventController: Validation error
             EventController -->> User: HTTP 400 Bad Request with error message
         end
     else User lacks privileges

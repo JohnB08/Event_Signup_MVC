@@ -6,7 +6,7 @@ namespace EventSignupApi.Services;
 
 public class DTOService
 {
-    public Event DtoHandler(EventDTO dto)
+    public Event GetNewEvent(EventDTO dto)
     {
         var newEvent = new Event(){
             EventName = dto.EventName,
@@ -18,6 +18,17 @@ public class DTOService
             newEvent.EventDate = dtoDate;
         }
         return newEvent;
+    }
+    public EventDTO MapEventToDto(Event returnEvent)
+    {
+        var dto = new EventDTO()
+        {
+            EventName = returnEvent.EventName,
+            Date = returnEvent.EventDate.ToString(),
+            Public = returnEvent.Public,
+            Genre = returnEvent.Genre.Genre
+        };
+        return dto;
     }
 
 }

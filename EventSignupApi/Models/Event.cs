@@ -9,6 +9,7 @@ public class Event
     public required string EventName {get;set;} = string.Empty;
     public DateTime EventDate{get;set;}
     public bool Public {get;set;}
+    [ForeignKey("Genre")]
     public int GenreId {get;set;}
     [ForeignKey("Owner")]
     public int UserId {get;set;}

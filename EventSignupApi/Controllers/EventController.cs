@@ -30,7 +30,7 @@ namespace EventSignupApi.Controllers
         {
             try 
             {
-                var newEvent = _dtoService.DtoHandler(dto);
+                var newEvent = _dtoService.GetNewEvent(dto);
             var existingGenre = _context.EventGenreLookup.Where(g => 
                                                                 string.Equals(g.Genre, dto.Genre))
                                                             .FirstOrDefault();
