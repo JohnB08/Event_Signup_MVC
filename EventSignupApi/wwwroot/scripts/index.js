@@ -4,7 +4,17 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const user = await checkAuthentication();
     if (user) {
-        authLink.innerHTML = `<a href="/Login/SignOut">Sign Out (${user.username})</a>`;
+        const signoutButton = document.createElement("button");
+        signoutButton.id = "logout-button";
+        signoutButton.textContent = "Sign out!";
+        signoutButton.addEventListener('click', async () => {
+            await fetch('/Login/SignOut', {
+                method: 'POST',
+                credentials: 'include'
+            });
+            window.location.reload();
+        })
+        authLink.appendChild(signoutButton);
         const createEventLink = document.createElement('a');
         createEventLink.href = '/event/create';
         createEventLink.textContent = 'Create Event';

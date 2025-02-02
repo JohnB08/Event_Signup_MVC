@@ -12,6 +12,13 @@ public class UserHandler(DatabaseContext context, UserDtoService dtoService, Tok
     
     private readonly TokenService _tokenService = tokenService;
 
+    /// <summary>
+    /// Creates a new user based on DTO
+    /// Returns a sessionToken as data on success,
+    /// Errormessage on failure.
+    /// </summary>
+    /// <param name="dto"></param>
+    /// <returns></returns>
     public HandlerResult<string> CreateNewUser(UserDTO dto)
     {
         if (_context.Users.Any(u => u.UserName == dto.UserName))
@@ -22,12 +29,14 @@ public class UserHandler(DatabaseContext context, UserDtoService dtoService, Tok
         };
         try
         {
-            _context.Users.Add(_dtoService.GetNewUser(dto));
+            var newUser = _dtoService.GetNewUser(dto);
+            _context.Users.Add(newUser);
             _context.SaveChanges();
+            var token  = _tokenService.CreateSession(newUser.UserName);
             return new HandlerResult<string>()
             {
                 Success = true,
-                Data = $"User with username {dto.UserName} created!"
+                Data = token
             };
         }
         catch (Exception ex)
@@ -39,6 +48,12 @@ public class UserHandler(DatabaseContext context, UserDtoService dtoService, Tok
             };
         }
     }
+    /// <summary>
+    /// Validates a userDTO, checks dto hash vs stored hash.
+    /// returns action message as Data/ErrorMessage
+    /// </summary>
+    /// <param name="dto"></param>
+    /// <returns></returns>
     public HandlerResult<string> ValidateUserDto(UserDTO dto)
     {
         var hashedValues = _dtoService.HashDTOValues(dto);
@@ -54,6 +69,13 @@ public class UserHandler(DatabaseContext context, UserDtoService dtoService, Tok
             Data = $"User with username: {existingUser.UserName} found."
         };
     }
+
+    /// <summary>
+    /// Gets a user based on username. 
+    /// Private method used after validating a token.
+    /// </summary>
+    /// <param name="userName"></param>
+    /// <returns></returns>
     private HandlerResult<User> GetUser(string userName)
     {
         var user = _context.Users.Where(u => u.UserName == userName).FirstOrDefault();
@@ -68,10 +90,20 @@ public class UserHandler(DatabaseContext context, UserDtoService dtoService, Tok
             Data = user
         };
     }
+    /// <summary>
+    /// Creates a session using a UserName
+    /// </summary>
+    /// <param name="userName"></param>
+    /// <returns></returns>
     public string CreateSession(string userName)
     {
         return _tokenService.CreateSession(userName);
     }
+    /// <summary>
+    /// Returns a User as Data after validating a token
+    /// </summary>
+    /// <param name="token"></param>
+    /// <returns></returns>
     public HandlerResult<User> ValidateSession(string token)
     {
         var tokenResult = _tokenService.ValidateSession(token);
@@ -82,6 +114,11 @@ public class UserHandler(DatabaseContext context, UserDtoService dtoService, Tok
         };
         return GetUser(tokenResult.Data);
     }
+    /// <summary>
+    /// Ends a session based on username
+    /// </summary>
+    /// <param name="token"></param>
+    /// <returns></returns>
     public HandlerResult<string> EndSession(string token)
     {
         return  _tokenService.EndSession(token);

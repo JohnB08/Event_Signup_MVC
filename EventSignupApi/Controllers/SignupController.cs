@@ -20,7 +20,11 @@ namespace EventSignupApi.Controllers
         public IActionResult Post([FromForm] UserDTO dto)
         {
             var result = _userHandler.CreateNewUser(dto);
-            if (result.Success) return Ok(result.Data);
+            if (result.Success) 
+            {   
+                Response.Cookies.Append("session_token", result.Data);
+                return Redirect("/");
+            }
             return StatusCode(500, result.ErrorMessage);
 
         }

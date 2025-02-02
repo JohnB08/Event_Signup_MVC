@@ -46,8 +46,8 @@ namespace EventSignupApi.Controllers
             }
             return Unauthorized(new {message = "no token"});
         }
-        [HttpPost("Logout")]
-        public IActionResult Logout()
+        [HttpPost("signout")]
+        public IActionResult Signout()
         {
             if (Request.Cookies.TryGetValue("session_token", out var sessionToken))
             {

@@ -20,14 +20,24 @@ body {
     justify-content: space-between;
 }
 
-.header a {
+.header a, #logout-button{
     color: white;
+    padding-left: 1rem;
     text-decoration: none;
     font-weight: bold;
 }
 
-.header a:hover {
+#logout-button
+{
+    border: none;
+    background-color: inherit;
+    font-family: inherit;
+    font-size: inherit;
+}
+
+.header a:hover, #logout-button:hover {
     text-decoration: underline;
+    cursor: pointer;
 }
 
 .events-container {

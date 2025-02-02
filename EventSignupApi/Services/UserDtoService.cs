@@ -7,6 +7,11 @@ namespace EventSignupApi.Services;
 
 public class UserDtoService
 {
+    /// <summary>
+    /// Gets a new user connected to a dto, hashes the password using SHA256
+    /// </summary>
+    /// <param name="dto"></param>
+    /// <returns></returns>
     public User GetNewUser(UserDTO dto)
     {
         return new User()
@@ -15,6 +20,12 @@ public class UserDtoService
             Hash = HashPassword(dto.Password)
         };
     }
+    /// <summary>
+    /// Method for hashing a password using SHA256
+    /// !!!THIS HAS NO SALTING, FOR DEMONSTRATION ONLY
+    /// </summary>
+    /// <param name="password"></param>
+    /// <returns></returns>
     private string HashPassword(string password)
     {
         using(var encrypt = SHA256.Create())
@@ -24,6 +35,11 @@ public class UserDtoService
             return Convert.ToHexString(hash);
         }
     }
+    /// <summary>
+    /// Returns a DTO with hashed values. 
+    /// </summary>
+    /// <param name="dto"></param>
+    /// <returns></returns>
     public UserDTO HashDTOValues(UserDTO dto)
     {
         return new UserDTO()

@@ -34,7 +34,13 @@ public class EventDataHandler(DatabaseContext context, DTOService dtoService)
         }
     }
 
-    /* Overload of GetEvents that returns all events that are either public, or is tied to the user through ownership */
+    /// <summary>
+    /// Get Events tied to a spesific user.
+    /// On success returns in Data a map of dtos with CanEdit set to true if user is owner or admin. 
+    /// Returns errormessage on failure. 
+    /// </summary>
+    /// <param name="user"></param>
+    /// <returns></returns>
     public HandlerResult<IEnumerable<EventDTO>> GetEvents(User user)
     {
         try
