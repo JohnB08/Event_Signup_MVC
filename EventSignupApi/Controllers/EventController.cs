@@ -1,39 +1,81 @@
-using EventSignupApi.Context;
-using EventSignupApi.Models;
+using System.Runtime.InteropServices;
 using EventSignupApi.Models.DTO;
+using EventSignupApi.Models.HandlerResult;
 using EventSignupApi.Services;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Diagnostics;
 
 namespace EventSignupApi.Controllers
 {
-    [Route("api/[controller]")]//localhost:3500/api/event
+    [Route("[controller]")]//localhost:3500/event
     [ApiController]
-    public class EventController(ILogger<EventController> logger, EventDataHandler eventDataHandler) : ControllerBase
+    public class EventController(ILogger<EventController> logger, EventDataHandler eventDataHandler, IWebHostEnvironment env, UserHandler userHandler) : ControllerBase
     {
 
         private readonly ILogger _logger = logger;
+
+        private readonly IWebHostEnvironment _env = env;
         private readonly EventDataHandler _eventDataHandler = eventDataHandler;
+        private readonly UserHandler _userHandler = userHandler;
 
         public IActionResult Get()
         {
-            var result = _eventDataHandler.GetEvents();
-            if (result.Success) return Ok(result.Data);
-            return StatusCode(500, new {message = result.ErrorMessage});
+            if (Request.Cookies.TryGetValue("session_token", out var token))
+            {
+                var userResult = _userHandler.ValidateSession(token);
+                if (userResult.Success) 
+                {
+                    var privateResults = _eventDataHandler.GetEvents(userResult.Data);
+                    return privateResults.Success ? Ok(privateResults.Data) : StatusCode(500, new{ message = privateResults.ErrorMessage});
+                }
+            }
+            var results = _eventDataHandler.GetEvents();
+            return results.Success ? Ok(results.Data) : StatusCode(500, new {message = results.ErrorMessage});
+        }
+        [HttpGet("{id}")]
+        public IActionResult Get(int id)
+        {
+            if (!Request.Cookies.TryGetValue("session_token", out var token))
+            {
+                return Unauthorized(new {message = "No access to single event."});
+            }
+            var userResult = _userHandler.ValidateSession(token);
+            if (!userResult.Success) return Unauthorized(new {message = "No access to single event."});
+            var eventResult = _eventDataHandler.GetSingleEvent(id, userResult.Data);
+            if (!eventResult.Success) return StatusCode(500, new {message = eventResult.ErrorMessage});
+            return Ok(eventResult.Data);
         }
         [HttpPost]
         public IActionResult Post([FromBody] EventDTO dto)
         {
-            var result = _eventDataHandler.PostNewEvent(dto);
-            if (result.Success) return Ok(new {message = result.Data});
-            return StatusCode(500, new {message = result.ErrorMessage});
+            if (Request.Cookies.TryGetValue("session_token", out var token))
+            {
+                var userResult = _userHandler.ValidateSession(token);
+                if (!userResult.Success) return Unauthorized(new {message = userResult.ErrorMessage});
+                var result = _eventDataHandler.PostNewEvent(dto, userResult.Data);
+                if (result.Success) return Ok(new {message = result.Data});
+                return StatusCode(500, new {message = result.ErrorMessage});
+            }
+            return Unauthorized(new {message = "Missing session token"});
         }
-        [HttpGet("edit")]
-        public IActionResult Edit()
+        [HttpGet("edit/{id}")]
+        public IActionResult GetEdit()
         {
-            _logger.Log(LogLevel.Warning, "Someone edited something");
-            return Ok(new {message = "Hello from Event controller Edit action"});
+            return PhysicalFile(Path.Combine(_env.WebRootPath, "edit.html"), "text/html");
+        }
+        [HttpPatch("edit/{id}")]
+        public IActionResult PatchEvent([FromRoute]int id, [FromBody] EventDTO dto)
+        {
+            if (!Request.Cookies.TryGetValue("session_token", out var token))
+            {
+                return Unauthorized(new {message = "Unauthorized access"});
+            }
+            var result = _eventDataHandler.EditEvent(dto, id);
+            return result.Success ? Ok(result.Data) : StatusCode(500, result.ErrorMessage);
+        }
+        [HttpGet("create")]
+        public IActionResult Create()
+        {
+            return PhysicalFile(Path.Combine(_env.WebRootPath, "create.html"), "text/html");
         }
     }
 }

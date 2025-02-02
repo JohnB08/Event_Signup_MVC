@@ -1,4 +1,3 @@
-using System;
 
 namespace EventSignupApi.Models.HandlerResult;
 

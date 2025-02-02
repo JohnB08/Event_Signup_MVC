@@ -6,12 +6,14 @@ namespace EventSignupApi.Services;
 
 public class DTOService
 {
-    public Event GetNewEvent(EventDTO dto)
+    public Event GetNewEvent(EventDTO dto, User user)
     {
         var newEvent = new Event(){
             EventName = dto.EventName,
             Public = dto.Public,
-            UserId = dto.UserId
+            UserId = user.UserId,
+            Owner = user,
+            MaxAttendees = dto.MaxAttendees,
         };
         if (DateTime.TryParse(dto.Date, out DateTime dtoDate))
         {
@@ -19,7 +21,7 @@ public class DTOService
         }
         return newEvent;
     }
-    public EventDTO MapEventToDto(Event returnEvent)
+    public EventDTO MapEventToDto(Event returnEvent, bool canEdit = false)
     {
         var dto = new EventDTO()
         {
@@ -27,9 +29,18 @@ public class DTOService
             Date = returnEvent.EventDate.ToString(),
             Public = returnEvent.Public,
             Genre = returnEvent.Genre.Genre,
-            UserId = returnEvent.UserId
+            CanEdit = canEdit,
+            MaxAttendees = returnEvent.MaxAttendees
         };
         return dto;
+    }
+    public void MapDtoToEvent(Event e, EventDTO dto, EventGenreLookupTable genre)
+    {
+        e.EventName = dto.EventName;
+        e.EventDate = DateTime.Parse(dto.Date);
+        e.Genre = genre;
+        e.GenreId = genre.Id;
+        e.MaxAttendees = dto.MaxAttendees;
     }
 
 }

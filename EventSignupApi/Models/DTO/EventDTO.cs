@@ -8,11 +8,13 @@ public class EventDTO
     [JsonPropertyName("eventName")]
     public required string EventName {get;set;}
     [JsonPropertyName("date")]
-    public string Date {get;set;}
+    public required string Date {get;set;}
     [JsonPropertyName("public")]
     public bool Public {get;set;}
-    [JsonPropertyName("userId")]
-    public int UserId {get;set;}
+    [JsonPropertyName("canEdit")]
+    public bool CanEdit {get;set;} = false;
     [JsonPropertyName("genre")]
-    public string Genre {get;set;}
+    public required string Genre {get;set;}
+    [JsonPropertyName("maxAttendees")]
+    public int MaxAttendees{get;set;}
 }

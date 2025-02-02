@@ -13,6 +13,7 @@ public class EventDataHandler(DatabaseContext context, DTOService dtoService)
     private readonly DatabaseContext _context = context;
     private readonly DTOService _dtoService = dtoService;
 
+    /* Overload of GetEvents that gets all publicly viewable events, and sets editable to false by default */
     public HandlerResult<IEnumerable<EventDTO>> GetEvents()
     {
         try
@@ -20,7 +21,7 @@ public class EventDataHandler(DatabaseContext context, DTOService dtoService)
             return new HandlerResult<IEnumerable<EventDTO>>()
             {
                 Success = true,
-                Data = _context.Events.Include(e => e.Genre).Select(e => _dtoService.MapEventToDto(e))
+                Data = _context.Events.Where(e=> e.Public == true).Include(e => e.Genre).Select(e => _dtoService.MapEventToDto(e, false))
             };
         }
         catch(Exception ex)
@@ -32,11 +33,50 @@ public class EventDataHandler(DatabaseContext context, DTOService dtoService)
             };
         }
     }
-    public HandlerResult<string> PostNewEvent(EventDTO dto)
+
+    /* Overload of GetEvents that returns all events that are either public, or is tied to the user through ownership */
+    public HandlerResult<IEnumerable<EventDTO>> GetEvents(User user)
     {
         try
         {
-            var newEvent = _dtoService.GetNewEvent(dto);
+            return new HandlerResult<IEnumerable<EventDTO>>()
+            {
+                Success = true,
+                Data = _context.Events
+                                .Include(e => e.Genre)
+                                .Include(e => e.Admins)
+                                .Where(e => e.Public || e.UserId == user.UserId || e.Admins.Any(a => a.UserId == user.UserId))
+                                .Select(e => _dtoService.MapEventToDto(e, e.UserId == user.UserId || e.Admins.Any(a => a.UserId == user.UserId)))
+            };
+        }
+        catch (Exception ex)
+        {
+            return new HandlerResult<IEnumerable<EventDTO>>()
+            {
+                Success = false,
+                ErrorMessage = ex.Message
+            };
+        }
+    }
+    public HandlerResult<EventDTO> GetSingleEvent(int id, User user)
+    {
+        var e = _context.Events.Include(e=> e.Genre).Include(e => e.Admins).Where(e => e.UserId == id).FirstOrDefault();
+        if (e == null || e.UserId != user.UserId || !e.Admins.Any(a => a.UserId == user.UserId)) return new HandlerResult<EventDTO>()
+        {
+            Success = false,
+            ErrorMessage = "Event not found"
+        };
+        return new HandlerResult<EventDTO>()
+        {
+            Success = true,
+            Data = _dtoService.MapEventToDto(e, e.UserId == user.UserId || e.Admins.Any(a => a.UserId == user.UserId))
+        };
+    }
+    public HandlerResult<string> PostNewEvent(EventDTO dto, User user)
+    {
+        try
+        {   
+            var newEvent = _dtoService.GetNewEvent(dto, user);
             var existingGenre = _context.EventGenreLookup.Where(g => 
                                                                 string.Equals(g.Genre, dto.Genre))
                                                             .FirstOrDefault();
@@ -72,6 +112,25 @@ public class EventDataHandler(DatabaseContext context, DTOService dtoService)
                 Success = false,
                 ErrorMessage = ex.Message
             };
+        }
+    }
+    public HandlerResult<string> EditEvent(EventDTO dto, int eventId)
+    {
+        try
+        {
+            var existingEvent = _context.Events.Find(eventId);
+            if (existingEvent == null) throw new NullReferenceException($"Missing event with event id = {eventId}");
+            var dtoGenre = _context.EventGenreLookup.Where(g => g.Genre == dto.Genre).FirstOrDefault();
+            if (dtoGenre == null) 
+            {
+                dtoGenre = new (){Genre = dto.Genre};
+                _context.Add(dtoGenre);
+            }
+            _dtoService.MapDtoToEvent(existingEvent, dto, dtoGenre);
+            throw new NotImplementedException();
+        } catch (Exception ex)
+        {
+            throw new NotImplementedException();
         }
     }
 }
