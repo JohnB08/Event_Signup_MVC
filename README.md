@@ -38,3 +38,8 @@ Vi skal jobbe i dette repoet sammen over flere uker for å få prosjektet på pl
 - Vi løste problem som oppsto forige uke, ved å separarere ut, og håndtere businesslogikk utenfor controlleren.
 - Vi laget vår egen returntype, for å isolere exceptions om databasen til handlere. Controllere håndterer nå kun exceptions rundt httpRequests.
 - Vi så på hvordan vi kan bruke generics til å lage vår egen returntype, som gir response tilbake til controller om en operasjon var vellykket eller ikke.
+
+## Dag 8
+- Vi laget egne services og kontrollere for å håndtere login og signout.
+- Vi laget en egen sessionHandler som holder oversikt over aktive logins så lenge serveren kjører, da vil folk kunne sende en passiv login request via httpOnly cookies så lenge serveren ikke har startet på nytt.
+Vi kan bruke httpOnly cookies for å sette en cookie i browseren som ikke kan leses av javascript på klientsiden. Den kan kun leses av serveren. 
