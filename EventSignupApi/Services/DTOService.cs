@@ -4,7 +4,7 @@ using EventSignupApi.Models.DTO;
 
 namespace EventSignupApi.Services;
 
-public class DTOService
+public class EventDTOService
 {
     /// <summary>
     /// Creates a new event based on DTO and a User.

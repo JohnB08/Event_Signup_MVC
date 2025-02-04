@@ -8,10 +8,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace EventSignupApi.Services;
 
-public class EventDataHandler(DatabaseContext context, DTOService dtoService, ILogger<EventDataHandler> logger)
+public class EventDataHandler(DatabaseContext context, EventDTOService dtoService, ILogger<EventDataHandler> logger)
 {
     private readonly DatabaseContext _context = context;
-    private readonly DTOService _dtoService = dtoService;
+    private readonly EventDTOService _dtoService = dtoService;
     private readonly ILogger<EventDataHandler> _logger = logger;
 
     /* Overload of GetEvents that gets all publicly viewable events, and sets editable to false by default */
