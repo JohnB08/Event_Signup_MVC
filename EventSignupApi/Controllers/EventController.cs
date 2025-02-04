@@ -44,6 +44,18 @@ namespace EventSignupApi.Controllers
             if (!eventResult.Success) return StatusCode(500, new {message = eventResult.ErrorMessage});
             return Ok(eventResult.Data);
         }
+        [HttpDelete("{id}")]
+        public IActionResult Delete(int id)
+        {
+            if (!Request.Cookies.TryGetValue("session_token", out var token))
+            {
+                return Unauthorized(new {message = "No access to single event."});
+            }
+            var userResult = _userHandler.ValidateSession(token);
+            if (!userResult.Success) return Unauthorized(new {message = "No access to single event"});
+            var deleteResult = _eventDataHandler.DeleteEvent(id, userResult.Data);
+            return deleteResult.Success ? Ok(deleteResult.Data) : StatusCode(500, new {message = deleteResult.ErrorMessage});
+        }
         [HttpPost]
         public IActionResult Post([FromBody] EventDTO dto)
         {

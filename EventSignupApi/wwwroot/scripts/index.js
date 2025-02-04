@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const events = await fetchEvents();
     events.forEach((event) => {
-        const osmCoordinates = getOpenStreetMapCoordinates(event.latLong[0], event.latLong[1], 15);
+        const osmCoordinates = getOpenStreetMapCoordinates(event.latLong[0], event.latLong[1], 14);
         const eventElement = document.createElement('div');
         eventElement.classList.add('event-card');
         eventElement.innerHTML = `
@@ -47,6 +47,17 @@ document.addEventListener('DOMContentLoaded', async () => {
                 window.location.href = `/Event/Edit/${event.id}`;
             };
             eventElement.appendChild(editButton);
+            const deleteButton = document.createElement('button');
+            deleteButton.textContent = 'Delete';
+            deleteButton.onclick = async() => 
+            {
+                const response = await fetch(`event/${event.id}`, {
+                    method: "DELETE",
+                    credentials: "include"
+                })
+                if (response.ok) window.location.reload();
+            }
+            eventElement.appendChild(deleteButton);
         }
 
         eventsList.appendChild(eventElement);
@@ -85,6 +96,7 @@ async function fetchEvents() {
     }
     return [];
 }
+
 function getOpenStreetMapCoordinates(lat, lon, zoom)
 {
     const n = Math.pow(2, zoom);

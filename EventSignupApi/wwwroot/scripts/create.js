@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const cancelButton = document.getElementById('cancel-button');
 
     //Setting up map
-    let map = L.map('map').setView([60.39, 5.52], 13);
+    let map = L.map('map').setView([60.39, 5.52], 14);
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
         attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'

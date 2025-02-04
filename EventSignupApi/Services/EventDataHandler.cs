@@ -1,4 +1,5 @@
 using System;
+using System.Linq.Expressions;
 using EventSignupApi.Context;
 using EventSignupApi.Models;
 using EventSignupApi.Models.DTO;
@@ -147,5 +148,27 @@ public class EventDataHandler(DatabaseContext context, EventDTOService dtoServic
                 ErrorMessage = ex.Message
             };
         }
+    }
+    public HandlerResult<string> DeleteEvent(int id,  User user)
+    {
+        try
+        {
+            _context.Events.Remove(_context.Events.Include(e=>e.Owner).Where(e=> e.EventId == id && e.Owner.UserId == user.UserId).FirstOrDefault()!);
+            _context.SaveChanges();
+            return new HandlerResult<string>()
+            {
+                Success = true,
+                Data = "Event successfully deleted"
+            };
+        }
+        catch (Exception ex)
+        {
+            return new HandlerResult<string>()
+            {
+                Success = false,
+                ErrorMessage = ex.Message
+            };
+        }
+
     }
 }

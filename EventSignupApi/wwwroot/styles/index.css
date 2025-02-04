@@ -86,6 +86,7 @@ h1 {
     border-radius: 4px;
     cursor: pointer;
     margin-top: 1rem;
+    margin-right: 0.5rem;
 }
 
 .event-card button:hover {
