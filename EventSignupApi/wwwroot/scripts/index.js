@@ -25,15 +25,19 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const events = await fetchEvents();
     events.forEach((event) => {
+        const osmCoordinates = getOpenStreetMapCoordinates(event.latLong[0], event.latLong[1], 15);
         const eventElement = document.createElement('div');
         eventElement.classList.add('event-card');
-
         eventElement.innerHTML = `
-            <h2>${event.eventName}</h2>
-            <p><strong>Location:</strong> ${event.latLong.join(", ")}</p>
-            <p><strong>Date & Time:</strong> ${event.date}</p>
-            <p><strong>Public:</strong> ${event.public ? 'Yes' : 'No'}</p>
-            <p><strong>Genre:</strong> ${event.genre}</p>
+        <div class="content">
+            <div class="textContent">
+                <h2>${event.eventName}</h2>
+                <p><strong>Date & Time:</strong> ${event.date}</p>
+                <p><strong>Public:</strong> ${event.public ? 'Yes' : 'No'}</p>
+                <p><strong>Genre:</strong> ${event.genre}</p>
+            </div>
+            <img src='https://tile.openstreetmap.org/${osmCoordinates.zoom}/${osmCoordinates.x}/${osmCoordinates.y}.png'
+        </div>
         `;
 
         if (event.canEdit) {
@@ -80,4 +84,11 @@ async function fetchEvents() {
         alert('Failed to fetch events. Please try again later.');
     }
     return [];
+}
+function getOpenStreetMapCoordinates(lat, lon, zoom)
+{
+    const n = Math.pow(2, zoom);
+    const x = Math.floor((lon + 180) / 360 * n);
+    const y = Math.floor((1 - Math.log(Math.tan(lat * Math.PI / 180) + 1 / Math.cos(lat * Math.PI / 180)) / Math.PI) / 2 * n);
+    return {x, y, zoom};
 }
