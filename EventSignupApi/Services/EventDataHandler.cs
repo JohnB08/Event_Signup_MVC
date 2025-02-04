@@ -8,10 +8,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace EventSignupApi.Services;
 
-public class EventDataHandler(DatabaseContext context, DTOService dtoService)
+public class EventDataHandler(DatabaseContext context, DTOService dtoService, ILogger<EventDataHandler> logger)
 {
     private readonly DatabaseContext _context = context;
     private readonly DTOService _dtoService = dtoService;
+    private readonly ILogger<EventDataHandler> _logger = logger;
 
     /* Overload of GetEvents that gets all publicly viewable events, and sets editable to false by default */
     public HandlerResult<IEnumerable<EventDTO>> GetEvents()
@@ -66,16 +67,16 @@ public class EventDataHandler(DatabaseContext context, DTOService dtoService)
     }
     public HandlerResult<EventDTO> GetSingleEvent(int id, User user)
     {
-        var e = _context.Events.Include(e=> e.Genre).Include(e => e.Admins).Where(e => e.UserId == id).FirstOrDefault();
-        if (e == null || e.UserId != user.UserId || !e.Admins.Any(a => a.UserId == user.UserId)) return new HandlerResult<EventDTO>()
-        {
-            Success = false,
-            ErrorMessage = "Event not found"
-        };
-        return new HandlerResult<EventDTO>()
+        var e = _context.Events.Include(e=> e.Genre).Include(e => e.Admins).Include(e => e.Owner).Where(e => e.Owner.UserId == user.UserId && e.EventId == id).FirstOrDefault();
+        if (e != null && (e.Owner.UserId == user.UserId || e.Admins.Any(a => a.UserId == user.UserId))) return new HandlerResult<EventDTO>()
         {
             Success = true,
             Data = _dtoService.MapEventToDto(e, e.UserId == user.UserId || e.Admins.Any(a => a.UserId == user.UserId))
+        };
+        return new HandlerResult<EventDTO>()
+        {
+            Success = false,
+            ErrorMessage = "Event not found"
         };
     }
     public HandlerResult<string> PostNewEvent(EventDTO dto, User user)
@@ -124,8 +125,7 @@ public class EventDataHandler(DatabaseContext context, DTOService dtoService)
     {
         try
         {
-            var existingEvent = _context.Events.Find(eventId);
-            if (existingEvent == null) throw new NullReferenceException($"Missing event with event id = {eventId}");
+            var existingEvent = _context.Events.Find(eventId) ?? throw new NullReferenceException($"Missing event with event id = {eventId}");
             var dtoGenre = _context.EventGenreLookup.Where(g => g.Genre == dto.Genre).FirstOrDefault();
             if (dtoGenre == null) 
             {
@@ -133,10 +133,19 @@ public class EventDataHandler(DatabaseContext context, DTOService dtoService)
                 _context.Add(dtoGenre);
             }
             _dtoService.MapDtoToEvent(existingEvent, dto, dtoGenre);
-            throw new NotImplementedException();
+            _context.SaveChanges();
+            return new HandlerResult<string>()
+            {
+                Success = true,
+                Data = "Edit Successfull"
+            };
         } catch (Exception ex)
         {
-            throw new NotImplementedException();
+            return new HandlerResult<string>()
+            {
+                Success = false,
+                ErrorMessage = ex.Message
+            };
         }
     }
 }

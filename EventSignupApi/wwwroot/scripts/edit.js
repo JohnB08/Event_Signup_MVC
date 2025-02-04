@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Extract event ID from URL
     const eventId = window.location.pathname.split("/").pop();
+    console.log(eventId);
 
     // Fetch event details
     try {
@@ -17,7 +18,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         const event = await response.json();
-        
+        console.log(event);
         // Populate the form fields
         document.getElementById('eventName').value = event.eventName;
         document.getElementById('date').value = new Date(event.date).toISOString().slice(0, 16);

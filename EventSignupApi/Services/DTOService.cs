@@ -39,6 +39,7 @@ public class DTOService
     {
         var dto = new EventDTO()
         {
+            Id = returnEvent.EventId,
             EventName = returnEvent.EventName,
             Date = returnEvent.EventDate.ToString(),
             Public = returnEvent.Public,
@@ -60,6 +61,7 @@ public class DTOService
         e.EventDate = DateTime.Parse(dto.Date);
         e.Genre = genre;
         e.GenreId = genre.Id;
+        e.Public = dto.Public;
         e.MaxAttendees = dto.MaxAttendees;
     }
 

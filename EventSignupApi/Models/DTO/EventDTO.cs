@@ -17,4 +17,5 @@ public class EventDTO
     public required string Genre {get;set;}
     [JsonPropertyName("maxAttendees")]
     public int MaxAttendees{get;set;}
+    public int? Id {get;set;}
 }

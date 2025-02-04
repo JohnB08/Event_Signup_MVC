@@ -36,7 +36,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             <p><strong>Genre:</strong> ${event.genre}</p>
         `;
 
-        if (event.editable) {
+        if (event.canEdit) {
             const editButton = document.createElement('button');
             editButton.textContent = 'Edit';
             editButton.onclick = () => {
