@@ -15,12 +15,15 @@ public class EventDTOService
     /// <returns></returns>
     public Event GetNewEvent(EventDTO dto, User user)
     {
-        var newEvent = new Event(){
+        var newEvent = new Event()
+        {
             EventName = dto.EventName,
             Public = dto.Public,
             UserId = user.UserId,
             Owner = user,
             MaxAttendees = dto.MaxAttendees,
+            Lat = dto.LatLong[0],
+            Long = dto.LatLong[1]
         };
         if (DateTime.TryParse(dto.Date, out DateTime dtoDate))
         {
@@ -45,7 +48,8 @@ public class EventDTOService
             Public = returnEvent.Public,
             Genre = returnEvent.Genre.Genre,
             CanEdit = canEdit,
-            MaxAttendees = returnEvent.MaxAttendees
+            MaxAttendees = returnEvent.MaxAttendees,
+            LatLong = [returnEvent.Lat, returnEvent.Long]
         };
         return dto;
     }
@@ -63,6 +67,8 @@ public class EventDTOService
         e.GenreId = genre.Id;
         e.Public = dto.Public;
         e.MaxAttendees = dto.MaxAttendees;
+        e.Lat = dto.LatLong[0];
+        e.Long = dto.LatLong[1];
     }
 
 }

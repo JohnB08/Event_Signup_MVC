@@ -13,6 +13,8 @@ public class Event
     public int GenreId {get;set;}
     [ForeignKey("Owner")]
     public int UserId {get;set;}
+    public double Lat {get;set;}
+    public double Long {get;set;}
     public int MaxAttendees{get;set;}
     public EventGenreLookupTable Genre{get;set;}
     public ICollection<User> SignUps {get;set;}

@@ -17,5 +17,7 @@ public class EventDTO
     public required string Genre {get;set;}
     [JsonPropertyName("maxAttendees")]
     public int MaxAttendees{get;set;}
+    [JsonPropertyName("latLong")]
+    public required double[] LatLong {get;set;}
     public int? Id {get;set;}
 }

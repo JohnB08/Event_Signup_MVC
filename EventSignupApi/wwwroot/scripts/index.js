@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         eventElement.innerHTML = `
             <h2>${event.eventName}</h2>
-            <p><strong>Location:</strong> ${event.location}</p>
+            <p><strong>Location:</strong> ${event.latLong.join(", ")}</p>
             <p><strong>Date & Time:</strong> ${event.date}</p>
             <p><strong>Public:</strong> ${event.public ? 'Yes' : 'No'}</p>
             <p><strong>Genre:</strong> ${event.genre}</p>

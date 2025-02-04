@@ -8,6 +8,11 @@ body {
     margin: 0;
 }
 
+#map
+{
+    height: 180px;
+}
+
 .create-container {
     background: white;
     padding: 2rem;
