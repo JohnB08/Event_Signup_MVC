@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics.Eventing.Reader;
 using EventSignupApi.Models;
 using EventSignupApi.Models.DTO;
 
@@ -13,7 +14,7 @@ public class EventDTOService
     /// <param name="dto"></param>
     /// <param name="user"></param>
     /// <returns></returns>
-    public Event GetNewEvent(EventDTO dto, User user)
+    public Event GetNewEvent(EventDTO dto, User user, EventGenreLookupTable genre)
     {
         var newEvent = new Event()
         {
@@ -23,12 +24,11 @@ public class EventDTOService
             Owner = user,
             MaxAttendees = dto.MaxAttendees,
             Lat = dto.LatLong[0],
-            Long = dto.LatLong[1]
+            Long = dto.LatLong[1],
+            GenreId = genre.Id,
+            Genre = genre,
+            EventDate = DateTime.TryParse(dto.Date, out DateTime dtoDate) ? dtoDate : DateTime.Now
         };
-        if (DateTime.TryParse(dto.Date, out DateTime dtoDate))
-        {
-            newEvent.EventDate = dtoDate;
-        }
         return newEvent;
     }
     /// <summary>

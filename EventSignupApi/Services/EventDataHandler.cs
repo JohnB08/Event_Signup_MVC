@@ -84,33 +84,37 @@ public class EventDataHandler(DatabaseContext context, EventDTOService dtoServic
     {
         try
         {   
-            var newEvent = _dtoService.GetNewEvent(dto, user);
+            
             var existingGenre = _context.EventGenreLookup.Where(g => 
-                                                                string.Equals(g.Genre, dto.Genre))
+                                                            string.Equals(g.Genre, dto.Genre))
                                                             .FirstOrDefault();
             if (existingGenre == null)
             {
                 var newGenre = new EventGenreLookupTable(){Genre = dto.Genre};
                 _context.EventGenreLookup.Add(newGenre);
-                newEvent.GenreId = newGenre.Id;
-                newEvent.Genre = newGenre;
+                _context.Events.Add(_dtoService.GetNewEvent(dto, user, newGenre));
+                _context.SaveChanges();
+                var e = _context.Events.Where(e=> e.UserId == user.UserId).FirstOrDefault();
+                user.EventId = e.EventId;
+                user.OwnedEvent = e;
+                _context.SaveChanges();
             }
             else 
             {
-                newEvent.Genre = existingGenre;
-                newEvent.GenreId = existingGenre.Id;
+                _context.Events.Add(_dtoService.GetNewEvent(dto, user, existingGenre));
+                _context.SaveChanges();
+                var e = _context.Events.Where(e=> e.UserId == user.UserId).FirstOrDefault()!;
+                user.EventId = e.EventId;
+                user.OwnedEvent = e;
+                _context.SaveChanges();
             }
-            var existingUser = _context.Users.Where(u => u.UserId == newEvent.UserId).FirstOrDefault();
-            existingUser.OwnedEvent = newEvent;
-            existingUser.EventId = newEvent.EventId;
-            newEvent.Owner = existingUser;
-            newEvent.UserId = existingUser.UserId;
-            _context.Events.Add(newEvent);
+            
+            
             _context.SaveChanges();
             return new HandlerResult<string>()
             {
                 Success = true,
-                Data = $"Successfully created new event with name {newEvent.EventName}"
+                Data = $"Successfully created new event."
             };
         }
         catch (Exception ex)
@@ -153,7 +157,7 @@ public class EventDataHandler(DatabaseContext context, EventDTOService dtoServic
     {
         try
         {
-            _context.Events.Remove(_context.Events.Include(e=>e.Owner).Where(e=> e.EventId == id && e.Owner.UserId == user.UserId).FirstOrDefault()!);
+            _context.Events.Remove(_context.Events.Include(e=>e.Owner).Where(e => e.EventId == id && e.Owner.UserId == user.UserId).FirstOrDefault()!);
             _context.SaveChanges();
             return new HandlerResult<string>()
             {

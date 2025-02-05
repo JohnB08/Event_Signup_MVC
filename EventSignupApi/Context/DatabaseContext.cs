@@ -19,6 +19,7 @@ public class DatabaseContext: DbContext
     {
         /* Data Source representerer hvor metoden skal finne / lage databasefilen. */
         optionsBuilder.UseSqlite("Data Source=Database/EventDatabase.db; foreign keys=true;");
+        optionsBuilder.LogTo(Console.WriteLine);
     }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

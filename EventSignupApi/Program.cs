@@ -1,10 +1,12 @@
 using EventSignupApi.Context;
 using EventSignupApi.Services;
+using EventSignupApi.Services.ENV;
+//Load env files.
 
+await DotEnv.Load("./.env");
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();

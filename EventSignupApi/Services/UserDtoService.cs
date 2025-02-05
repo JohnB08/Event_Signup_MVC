@@ -30,7 +30,8 @@ public class UserDtoService
     {
         using(var encrypt = SHA256.Create())
         {
-            var bytes = Encoding.UTF8.GetBytes(password);
+            var salt = Environment.GetEnvironmentVariable("PWSALT");
+            var bytes = Encoding.UTF8.GetBytes(password + salt);
             var hash = encrypt.ComputeHash(bytes);
             return Convert.ToHexString(hash);
         }

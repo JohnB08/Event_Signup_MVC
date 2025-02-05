@@ -26,7 +26,12 @@ public class TokenService
     /// <returns></returns>
     public HandlerResult<string>ValidateSession(string token)
     {
-        return _activeSessions.TryGetValue(token, out string userName) ? new HandlerResult<string>(){ Success = true, Data = userName} : new HandlerResult<string>(){Success = false, ErrorMessage = "Invalid Token"};
+        return  new HandlerResult<string>()
+        {
+            Success = _activeSessions.TryGetValue(token, out var userName),
+            Data = userName ?? string.Empty,
+            ErrorMessage = "Failed to load"
+        };
     }
 
     /// <summary>
