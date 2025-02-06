@@ -1,4 +1,4 @@
-using System.Runtime.InteropServices;
+using EventSignupApi.Models;
 using EventSignupApi.Models.DTO;
 using EventSignupApi.Models.HandlerResult;
 using EventSignupApi.Services;
@@ -22,14 +22,22 @@ namespace EventSignupApi.Controllers
             if (Request.Cookies.TryGetValue("session_token", out var token))
             {
                 var userResult = _userHandler.ValidateSession(token);
-                if (userResult.Success) 
+                if (userResult is HandlerResult<User>.Success success)
                 {
-                    var privateResults = _eventDataHandler.GetEvents(userResult.Data);
-                    return privateResults.Success ? Ok(privateResults.Data) : StatusCode(500, new{ message = privateResults.ErrorMessage});
+                    return _eventDataHandler.GetEvents(success.Data) switch
+                    {
+                        HandlerResult<IEnumerable<EventDTO>>.Success s => Ok(s.Data),
+                        HandlerResult<IEnumerable<EventDTO>>.Failure f => StatusCode(500, new {message = f.ErrorMessage}),
+                        _ => StatusCode(500, new {message = "something went wrong"})
+                    };
                 }
             }
-            var results = _eventDataHandler.GetEvents();
-            return results.Success ? Ok(results.Data) : StatusCode(500, new {message = results.ErrorMessage});
+            return _eventDataHandler.GetEvents() switch
+            {
+                    HandlerResult<IEnumerable<EventDTO>>.Success s => Ok(s.Data),
+                    HandlerResult<IEnumerable<EventDTO>>.Failure f => StatusCode(500, new {message = f.ErrorMessage}),
+                    _ => StatusCode(500, new {message = "Something went wrong"})
+            };
         }
         [HttpGet("{id}")]
         public IActionResult Get(int id)
@@ -39,10 +47,17 @@ namespace EventSignupApi.Controllers
                 return Unauthorized(new {message = "No access to single event."});
             }
             var userResult = _userHandler.ValidateSession(token);
-            if (!userResult.Success) return Unauthorized(new {message = "No access to single event."});
-            var eventResult = _eventDataHandler.GetSingleEvent(id, userResult.Data);
-            if (!eventResult.Success) return StatusCode(500, new {message = eventResult.ErrorMessage});
-            return Ok(eventResult.Data);
+            if (userResult is HandlerResult<User>.Success s)
+            {
+                return _eventDataHandler.GetSingleEvent(id, s.Data) switch
+                {
+                    HandlerResult<EventDTO>.Success su => Ok(su.Data),
+                    HandlerResult<EventDTO>.Failure f => StatusCode(500, new {message = f.ErrorMessage}),
+                    _ => StatusCode(500, new {message = "something went wrong"})
+                };
+            }
+            else return Unauthorized();
+
         }
         [HttpDelete("{id}")]
         public IActionResult Delete(int id)
@@ -52,9 +67,16 @@ namespace EventSignupApi.Controllers
                 return Unauthorized(new {message = "No access to single event."});
             }
             var userResult = _userHandler.ValidateSession(token);
-            if (!userResult.Success) return Unauthorized(new {message = "No access to single event"});
-            var deleteResult = _eventDataHandler.DeleteEvent(id, userResult.Data);
-            return deleteResult.Success ? Ok(deleteResult.Data) : StatusCode(500, new {message = deleteResult.ErrorMessage});
+            if (userResult is HandlerResult<User>.Success s)
+            {
+                return _eventDataHandler.DeleteEvent(id, s.Data) switch
+                {
+                    HandlerResult<string>.Success su => Ok(su.Data),
+                    HandlerResult<string>.Failure f => StatusCode(500, new {message = f.ErrorMessage}),
+                    _ => StatusCode(500, new {message = "Something went wrong"})
+                };
+            }
+            return StatusCode(500, new {message = "Something went wrong"});
         }
         [HttpPost]
         public IActionResult Post([FromBody] EventDTO dto)
@@ -62,10 +84,15 @@ namespace EventSignupApi.Controllers
             if (Request.Cookies.TryGetValue("session_token", out var token))
             {
                 var userResult = _userHandler.ValidateSession(token);
-                if (!userResult.Success) return Unauthorized(new {message = userResult.ErrorMessage});
-                var result = _eventDataHandler.PostNewEvent(dto, userResult.Data);
-                if (result.Success) return Ok(new {message = result.Data});
-                return StatusCode(500, new {message = result.ErrorMessage});
+                if (userResult is HandlerResult<User>.Success s)
+                {
+                    return _eventDataHandler.PostNewEvent(dto, s.Data) switch
+                    {
+                        HandlerResult<string>.Success su => Ok(su.Data),
+                        HandlerResult<string>.Failure f => StatusCode(500, new {message = f.ErrorMessage}),
+                        _ => StatusCode(500, new {message = "Something went wrong"})
+                    };
+                }
             }
             return Unauthorized(new {message = "Missing session token"});
         }
@@ -81,8 +108,12 @@ namespace EventSignupApi.Controllers
             {
                 return Unauthorized(new {message = "Unauthorized access"});
             }
-            var result = _eventDataHandler.EditEvent(dto, id);
-            return result.Success ? Ok(result.Data) : StatusCode(500, result.ErrorMessage);
+            return  _eventDataHandler.EditEvent(dto, id) switch
+            {
+                HandlerResult<string>.Success s => Ok(s.Data),
+                HandlerResult<string>.Failure f => StatusCode(500, new {message = f.ErrorMessage}),
+                _ => StatusCode(500, new {message = "Something went wrong"})
+            };
         }
         [HttpGet("create")]
         public IActionResult Create()

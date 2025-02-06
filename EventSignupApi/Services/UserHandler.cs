@@ -22,30 +22,18 @@ public class UserHandler(DatabaseContext context, UserDtoService dtoService, Tok
     public HandlerResult<string> CreateNewUser(UserDTO dto)
     {
         if (_context.Users.Any(u => u.UserName == dto.UserName))
-        return new HandlerResult<string>()
-        {
-            Success = false,
-            ErrorMessage = "Username allready taken"
-        };
+        return HandlerResult<string>.Error("Username allready taken");
         try
         {
             var newUser = _dtoService.GetNewUser(dto);
             _context.Users.Add(newUser);
             _context.SaveChanges();
             var token  = _tokenService.CreateSession(newUser.UserName);
-            return new HandlerResult<string>()
-            {
-                Success = true,
-                Data = token
-            };
+            return HandlerResult<string>.Ok(token);
         }
         catch (Exception ex)
         {
-            return new HandlerResult<string>
-            {
-                Success = false,
-                ErrorMessage = ex.Message
-            };
+            return HandlerResult<string>.Error(ex.Message);
         }
     }
     /// <summary>
@@ -58,16 +46,8 @@ public class UserHandler(DatabaseContext context, UserDtoService dtoService, Tok
     {
         var hashedValues = _dtoService.HashDTOValues(dto);
         var existingUser = _context.Users.Where(u => u.Hash == hashedValues.Password).FirstOrDefault();
-        if (existingUser == null) return new HandlerResult<string>()
-        {
-            Success = false,
-            ErrorMessage = "Could not find a valid user"
-        };
-        return new HandlerResult<string>()
-        {
-            Success = true,
-            Data = $"User with username: {existingUser.UserName} found."
-        };
+        if (existingUser == null) return HandlerResult<string>.Error("Missing user");
+        return HandlerResult<string>.Ok("User validated");
     }
 
     /// <summary>
@@ -79,16 +59,8 @@ public class UserHandler(DatabaseContext context, UserDtoService dtoService, Tok
     private HandlerResult<User> GetUser(string userName)
     {
         var user = _context.Users.Where(u => u.UserName == userName).FirstOrDefault();
-        if (user == null) return new HandlerResult<User>()
-        {
-            Success = false,
-            ErrorMessage = "Missing User"
-        };
-        return new HandlerResult<User>()
-        {
-            Success = true,
-            Data = user
-        };
+        if (user == null) return HandlerResult<User>.Error("Missing user");
+        return HandlerResult<User>.Ok(user);
     }
     /// <summary>
     /// Creates a session using a UserName
@@ -107,12 +79,12 @@ public class UserHandler(DatabaseContext context, UserDtoService dtoService, Tok
     public HandlerResult<User> ValidateSession(string token)
     {
         var tokenResult = _tokenService.ValidateSession(token);
-        if (!tokenResult.Success) return new HandlerResult<User>()
+        return tokenResult switch
         {
-            Success = false,
-            ErrorMessage = tokenResult.ErrorMessage
+            HandlerResult<string>.Success success => GetUser(success.Data),
+            HandlerResult<string>.Failure failure => HandlerResult<User>.Error(failure.ErrorMessage),
+            _ => throw new NotImplementedException()
         };
-        return GetUser(tokenResult.Data);
     }
     /// <summary>
     /// Ends a session based on username

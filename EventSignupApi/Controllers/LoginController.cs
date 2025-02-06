@@ -1,4 +1,6 @@
+using EventSignupApi.Models;
 using EventSignupApi.Models.DTO;
+using EventSignupApi.Models.HandlerResult;
 using EventSignupApi.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -20,7 +22,7 @@ namespace EventSignupApi.Controllers
         public IActionResult Post([FromForm] UserDTO dto)
         {
             var result = _userHandler.ValidateUserDto(dto);
-            if (!result.Success) return Unauthorized(result.ErrorMessage);
+            if (result is HandlerResult<string>.Failure f) return Unauthorized(new {message = f.ErrorMessage});
 
             string token = _userHandler.CreateSession(dto.UserName);
 
@@ -40,9 +42,12 @@ namespace EventSignupApi.Controllers
         {
             if (Request.Cookies.TryGetValue("session_token", out var sessionToken))
             {
-                var result = _userHandler.ValidateSession(sessionToken);
-                if (result.Success) return Ok(new {username = result.Data.UserName});
-                return Unauthorized(new {message = result.ErrorMessage});
+                return _userHandler.ValidateSession(sessionToken) switch
+                {
+                    HandlerResult<User>.Success s => Ok(new {userName = s.Data.UserName}),
+                    HandlerResult<User>.Failure f => Unauthorized(new {message = f.ErrorMessage}),
+                    _ => StatusCode(500, new {message = "Something went wrong"})
+                };
             }
             return Unauthorized(new {message = "no token"});
         }

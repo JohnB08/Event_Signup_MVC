@@ -1,6 +1,6 @@
 using EventSignupApi.Models.DTO;
+using EventSignupApi.Models.HandlerResult;
 using EventSignupApi.Services;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EventSignupApi.Controllers
@@ -20,13 +20,16 @@ namespace EventSignupApi.Controllers
         public IActionResult Post([FromForm] UserDTO dto)
         {
             var result = _userHandler.CreateNewUser(dto);
-            if (result.Success) 
-            {   
-                Response.Cookies.Append("session_token", result.Data);
-                return Redirect("/");
+            switch (result)
+            {
+                case HandlerResult<string>.Success s:
+                    Response.Cookies.Append("session_token", s.Data);
+                    return Redirect("/");
+                case HandlerResult<string>.Failure f:
+                    return StatusCode(500, new {message = f.ErrorMessage});
+                default:
+                    return StatusCode(500, new {message = "something went wrong"});
             }
-            return StatusCode(500, result.ErrorMessage);
-
         }
     }
 }

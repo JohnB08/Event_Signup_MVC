@@ -26,12 +26,9 @@ public class TokenService
     /// <returns></returns>
     public HandlerResult<string>ValidateSession(string token)
     {
-        return  new HandlerResult<string>()
-        {
-            Success = _activeSessions.TryGetValue(token, out var userName),
-            Data = userName ?? string.Empty,
-            ErrorMessage = "Failed to load"
-        };
+        return  _activeSessions.TryGetValue(token, out var userName) 
+        ? HandlerResult<string>.Ok(userName) 
+        : HandlerResult<string>.Error("Failed to find user");
     }
 
     /// <summary>
@@ -45,19 +42,11 @@ public class TokenService
         try
         {
             _activeSessions.Remove(token);
-            return new HandlerResult<string>()
-            {
-                Success = true,
-                Data = "Token removed successfully"
-            };
+            return HandlerResult<string>.Ok("Token removed successfully");
         }
         catch (Exception ex)
         {
-            return new HandlerResult<string>()
-            {
-                Success = false,
-                ErrorMessage = ex.Message
-            };
+            return HandlerResult<string>.Error($"Failed to remove token {ex.Message}");
         }
     }
 }
