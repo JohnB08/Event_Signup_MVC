@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using EventSignupApi.Models;
 using EventSignupApi.Models.DTO;
 using EventSignupApi.Models.HandlerResult;
@@ -17,11 +18,11 @@ namespace EventSignupApi.Controllers
         private readonly EventDataHandler _eventDataHandler = eventDataHandler;
         private readonly UserHandler _userHandler = userHandler;
 
-        public IActionResult Get()
+        public async Task<IActionResult> Get()
         {
             if (Request.Cookies.TryGetValue("session_token", out var token))
             {
-                var userResult = _userHandler.ValidateSession(token);
+                var userResult = await _userHandler.ValidateSession(token);
                 if (userResult is HandlerResult<User>.Success success)
                 {
                     return _eventDataHandler.GetEvents(success.Data) switch
@@ -40,16 +41,16 @@ namespace EventSignupApi.Controllers
             };
         }
         [HttpGet("{id}")]
-        public IActionResult Get(int id)
+        public async Task<IActionResult> Get(int id)
         {
             if (!Request.Cookies.TryGetValue("session_token", out var token))
             {
                 return Unauthorized(new {message = "No access to single event."});
             }
-            var userResult = _userHandler.ValidateSession(token);
+            var userResult = await _userHandler.ValidateSession(token);
             if (userResult is HandlerResult<User>.Success s)
             {
-                return _eventDataHandler.GetSingleEvent(id, s.Data) switch
+                return await _eventDataHandler.GetSingleEvent(id, s.Data) switch
                 {
                     HandlerResult<EventDTO>.Success su => Ok(su.Data),
                     HandlerResult<EventDTO>.Failure f => StatusCode(500, new {message = f.ErrorMessage}),
@@ -60,16 +61,16 @@ namespace EventSignupApi.Controllers
 
         }
         [HttpDelete("{id}")]
-        public IActionResult Delete(int id)
+        public async Task<IActionResult> Delete(int id)
         {
             if (!Request.Cookies.TryGetValue("session_token", out var token))
             {
                 return Unauthorized(new {message = "No access to single event."});
             }
-            var userResult = _userHandler.ValidateSession(token);
+            var userResult = await _userHandler.ValidateSession(token);
             if (userResult is HandlerResult<User>.Success s)
             {
-                return _eventDataHandler.DeleteEvent(id, s.Data) switch
+                return await _eventDataHandler.DeleteEvent(id, s.Data) switch
                 {
                     HandlerResult<string>.Success su => Ok(su.Data),
                     HandlerResult<string>.Failure f => StatusCode(500, new {message = f.ErrorMessage}),
@@ -79,14 +80,14 @@ namespace EventSignupApi.Controllers
             return StatusCode(500, new {message = "Something went wrong"});
         }
         [HttpPost]
-        public IActionResult Post([FromBody] EventDTO dto)
+        public async Task<IActionResult> Post([FromBody] EventDTO dto)
         {
             if (Request.Cookies.TryGetValue("session_token", out var token))
             {
-                var userResult = _userHandler.ValidateSession(token);
+                var userResult = await _userHandler.ValidateSession(token);
                 if (userResult is HandlerResult<User>.Success s)
                 {
-                    return _eventDataHandler.PostNewEvent(dto, s.Data) switch
+                    return await _eventDataHandler.PostNewEvent(dto, s.Data) switch
                     {
                         HandlerResult<string>.Success su => Ok(su.Data),
                         HandlerResult<string>.Failure f => StatusCode(500, new {message = f.ErrorMessage}),
@@ -102,13 +103,13 @@ namespace EventSignupApi.Controllers
             return PhysicalFile(Path.Combine(_env.WebRootPath, "edit.html"), "text/html");
         }
         [HttpPatch("edit/{id}")]
-        public IActionResult PatchEvent([FromRoute]int id, [FromBody] EventDTO dto)
+        public async Task<IActionResult> PatchEvent([FromRoute]int id, [FromBody] EventDTO dto)
         {
             if (!Request.Cookies.TryGetValue("session_token", out var token))
             {
                 return Unauthorized(new {message = "Unauthorized access"});
             }
-            return  _eventDataHandler.EditEvent(dto, id) switch
+            return  await _eventDataHandler.EditEvent(dto, id) switch
             {
                 HandlerResult<string>.Success s => Ok(s.Data),
                 HandlerResult<string>.Failure f => StatusCode(500, new {message = f.ErrorMessage}),

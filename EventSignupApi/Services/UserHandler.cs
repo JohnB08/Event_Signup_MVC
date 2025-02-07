@@ -2,6 +2,7 @@ using EventSignupApi.Context;
 using EventSignupApi.Models;
 using EventSignupApi.Models.DTO;
 using EventSignupApi.Models.HandlerResult;
+using Microsoft.EntityFrameworkCore;
 
 namespace EventSignupApi.Services;
 
@@ -19,7 +20,7 @@ public class UserHandler(DatabaseContext context, UserDtoService dtoService, Tok
     /// </summary>
     /// <param name="dto"></param>
     /// <returns></returns>
-    public HandlerResult<string> CreateNewUser(UserDTO dto)
+    public async Task<HandlerResult<string>> CreateNewUser(UserDTO dto)
     {
         if (_context.Users.Any(u => u.UserName == dto.UserName))
         return HandlerResult<string>.Error("Username allready taken");
@@ -27,7 +28,7 @@ public class UserHandler(DatabaseContext context, UserDtoService dtoService, Tok
         {
             var newUser = _dtoService.GetNewUser(dto);
             _context.Users.Add(newUser);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
             var token  = _tokenService.CreateSession(newUser.UserName);
             return HandlerResult<string>.Ok(token);
         }
@@ -42,10 +43,10 @@ public class UserHandler(DatabaseContext context, UserDtoService dtoService, Tok
     /// </summary>
     /// <param name="dto"></param>
     /// <returns></returns>
-    public HandlerResult<string> ValidateUserDto(UserDTO dto)
+    public async Task<HandlerResult<string>> ValidateUserDto(UserDTO dto)
     {
         var hashedValues = _dtoService.HashDTOValues(dto);
-        var existingUser = _context.Users.Where(u => u.Hash == hashedValues.Password).FirstOrDefault();
+        var existingUser = await _context.Users.Where(u => u.Hash == hashedValues.Password).FirstOrDefaultAsync();
         if (existingUser == null) return HandlerResult<string>.Error("Missing user");
         return HandlerResult<string>.Ok("User validated");
     }
@@ -56,9 +57,9 @@ public class UserHandler(DatabaseContext context, UserDtoService dtoService, Tok
     /// </summary>
     /// <param name="userName"></param>
     /// <returns></returns>
-    private HandlerResult<User> GetUser(string userName)
+    private async Task<HandlerResult<User>> GetUser(string userName)
     {
-        var user = _context.Users.Where(u => u.UserName == userName).FirstOrDefault();
+        var user = await _context.Users.Where(u => u.UserName == userName).FirstOrDefaultAsync();
         if (user == null) return HandlerResult<User>.Error("Missing user");
         return HandlerResult<User>.Ok(user);
     }
@@ -76,12 +77,12 @@ public class UserHandler(DatabaseContext context, UserDtoService dtoService, Tok
     /// </summary>
     /// <param name="token"></param>
     /// <returns></returns>
-    public HandlerResult<User> ValidateSession(string token)
+    public async Task<HandlerResult<User>> ValidateSession(string token)
     {
         var tokenResult = _tokenService.ValidateSession(token);
         return tokenResult switch
         {
-            HandlerResult<string>.Success success => GetUser(success.Data),
+            HandlerResult<string>.Success success => await GetUser(success.Data),
             HandlerResult<string>.Failure failure => HandlerResult<User>.Error(failure.ErrorMessage),
             _ => throw new NotImplementedException()
         };

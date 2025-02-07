@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using EventSignupApi.Models;
 using EventSignupApi.Models.DTO;
 using EventSignupApi.Models.HandlerResult;
@@ -19,9 +20,9 @@ namespace EventSignupApi.Controllers
             return PhysicalFile(Path.Combine(_env.WebRootPath, "login.html"), "text/html");
         }
         [HttpPost()]
-        public IActionResult Post([FromForm] UserDTO dto)
+        public async Task<IActionResult> Post([FromForm] UserDTO dto)
         {
-            var result = _userHandler.ValidateUserDto(dto);
+            var result = await _userHandler.ValidateUserDto(dto);
             if (result is HandlerResult<string>.Failure f) return Unauthorized(new {message = f.ErrorMessage});
 
             string token = _userHandler.CreateSession(dto.UserName);
@@ -38,11 +39,11 @@ namespace EventSignupApi.Controllers
             return Redirect("/");
         }
         [HttpGet("IsAuthenticated")]
-        public IActionResult IsAuthenticated()
+        public async Task<IActionResult> IsAuthenticated()
         {
             if (Request.Cookies.TryGetValue("session_token", out var sessionToken))
             {
-                return _userHandler.ValidateSession(sessionToken) switch
+                return await _userHandler.ValidateSession(sessionToken) switch
                 {
                     HandlerResult<User>.Success s => Ok(new {userName = s.Data.UserName}),
                     HandlerResult<User>.Failure f => Unauthorized(new {message = f.ErrorMessage}),
