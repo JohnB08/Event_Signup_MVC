@@ -16,8 +16,8 @@ public class Event
     public double Lat {get;set;}
     public double Long {get;set;}
     public int MaxAttendees{get;set;}
-    public EventGenreLookupTable Genre{get;set;}
-    public ICollection<User> SignUps {get;set;}
-    public ICollection<User> Admins {get;set;}
-    public User Owner {get;set;}
+    public required EventGenreLookupTable Genre{get;set;}
+    public ICollection<User>? SignUps {get;set;}
+    public ICollection<User>? Admins {get;set;}
+    public required User Owner {get;set;}
 }

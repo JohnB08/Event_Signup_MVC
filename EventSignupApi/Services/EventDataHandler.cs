@@ -20,11 +20,11 @@ public class EventDataHandler(DatabaseContext context, EventDTOService dtoServic
     {
         try
         {
-            return new HandlerResult<IEnumerable<EventDTO>>.Success(_context.Events.Where(e=> e.Public == true).Include(e => e.Genre).Select(e => _dtoService.MapEventToDto(e, false)));
+            return HandlerResult<IEnumerable<EventDTO>>.Ok(_context.Events.Where(e=> e.Public == true).Include(e => e.Genre).Select(e => _dtoService.MapEventToDto(e, false)));
         }
         catch(Exception ex)
         {
-            return new HandlerResult<IEnumerable<EventDTO>>.Failure(ex.Message);
+            return HandlerResult<IEnumerable<EventDTO>>.Error(ex.Message);
         }
     }
 
@@ -39,7 +39,7 @@ public class EventDataHandler(DatabaseContext context, EventDTOService dtoServic
     {
         try
         {
-            return new HandlerResult<IEnumerable<EventDTO>>.Success(_context.Events
+            return HandlerResult<IEnumerable<EventDTO>>.Ok(_context.Events
                                 .Include(e => e.Genre)
                                 .Include(e => e.Admins)
                                 .Where(e => e.Public || e.UserId == user.UserId || e.Admins.Any(a => a.UserId == user.UserId))
@@ -47,7 +47,7 @@ public class EventDataHandler(DatabaseContext context, EventDTOService dtoServic
         }
         catch (Exception ex)
         {
-            return new HandlerResult<IEnumerable<EventDTO>>.Failure(ex.Message);
+            return HandlerResult<IEnumerable<EventDTO>>.Error(ex.Message);
         }
     }
     public HandlerResult<EventDTO> GetSingleEvent(int id, User user)
@@ -70,7 +70,7 @@ public class EventDataHandler(DatabaseContext context, EventDTOService dtoServic
                 _context.EventGenreLookup.Add(newGenre);
                 _context.Events.Add(_dtoService.GetNewEvent(dto, user, newGenre));
                 _context.SaveChanges();
-                var e = _context.Events.Where(e=> e.UserId == user.UserId).FirstOrDefault();
+                var e = _context.Events.Where(e=> e.UserId == user.UserId).FirstOrDefault()!;
                 user.EventId = e.EventId;
                 user.OwnedEvent = e;
                 _context.SaveChanges();
@@ -84,14 +84,12 @@ public class EventDataHandler(DatabaseContext context, EventDTOService dtoServic
                 user.OwnedEvent = e;
                 _context.SaveChanges();
             }
-            
-            
             _context.SaveChanges();
             return HandlerResult<string>.Ok("Created new event!");
         }
         catch (Exception ex)
         {
-            return HandlerResult<string>.Error("Failed to create event");
+            return HandlerResult<string>.Error($"Failed to create event: {ex.Message}");
         }
     }
     public HandlerResult<string> EditEvent(EventDTO dto, int eventId)
