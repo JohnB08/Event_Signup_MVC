@@ -1,6 +1,7 @@
 using EventSignupApi.Context;
 using EventSignupApi.Services;
 using EventSignupApi.Services.ENV;
+using EventSignupApi.Services.LevenShteinService;
 //Load env files.
 
 await DotEnv.Load("./.env");
@@ -19,6 +20,7 @@ builder.Services.AddTransient<EventDTOService>();
 builder.Services.AddTransient<EventDataHandler>();
 builder.Services.AddTransient<UserDtoService>();
 builder.Services.AddTransient<UserHandler>();
+builder.Services.AddTransient<LS>();
 
 //TokenService skal holde oversikt over aktive sessions, denne staten skal helst holdes i livet over hele livssyklussen til appen vår, og bør derfor implementeres som en singleton.
 builder.Services.AddSingleton<TokenService>();

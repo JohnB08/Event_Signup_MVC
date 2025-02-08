@@ -4,16 +4,18 @@ using EventSignupApi.Context;
 using EventSignupApi.Models;
 using EventSignupApi.Models.DTO;
 using EventSignupApi.Models.HandlerResult;
+using EventSignupApi.Services.LevenShteinService;
 using Microsoft.EntityFrameworkCore;
 
 
 namespace EventSignupApi.Services;
 
-public class EventDataHandler(DatabaseContext context, EventDTOService dtoService, ILogger<EventDataHandler> logger)
+public class EventDataHandler(DatabaseContext context, EventDTOService dtoService, ILogger<EventDataHandler> logger, LS ls)
 {
     private readonly DatabaseContext _context = context;
     private readonly EventDTOService _dtoService = dtoService;
     private readonly ILogger<EventDataHandler> _logger = logger;
+    private readonly LS _ls = ls;
 
     /* Overload of GetEvents that gets all publicly viewable events, and sets editable to false by default */
     public HandlerResult<IEnumerable<EventDTO>> GetEvents()
@@ -61,9 +63,14 @@ public class EventDataHandler(DatabaseContext context, EventDTOService dtoServic
         try
         {   
             
-            var existingGenre = await _context.EventGenreLookup.Where(g => 
-                                                            string.Equals(g.Genre, dto.Genre))
-                                                            .FirstOrDefaultAsync();
+            var genreList = await _context.EventGenreLookup.ToListAsync();
+            var existingGenre = genreList.Select(g => new {
+                                                                                            genreObj = g,
+                                                                                            distance = _ls.DistanceRec(dto.Genre.ToLower().AsSpan(), g.Genre.ToLower().AsSpan())
+                                                                                        })
+                                                                                        .Where(x => x.distance < (x.genreObj.Genre.Length/2)+1)
+                                                                                        .OrderBy(x => x.distance)
+                                                                                        .FirstOrDefault();
             if (existingGenre == null)
             {
                 var newGenre = new EventGenreLookupTable(){Genre = dto.Genre};
@@ -77,7 +84,7 @@ public class EventDataHandler(DatabaseContext context, EventDTOService dtoServic
             }
             else 
             {
-                _context.Events.Add(_dtoService.GetNewEvent(dto, user, existingGenre));
+                _context.Events.Add(_dtoService.GetNewEvent(dto, user, existingGenre.genreObj));
                 await _context.SaveChangesAsync();
                 var e = await _context.Events.Where(e=> e.UserId == user.UserId).FirstOrDefaultAsync()!;
                 user.EventId = e.EventId;
