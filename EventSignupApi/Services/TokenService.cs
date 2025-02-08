@@ -1,11 +1,12 @@
 using System;
+using System.Collections.Concurrent;
 using EventSignupApi.Models.HandlerResult;
 
 namespace EventSignupApi.Services;
 
 public class TokenService
 {
-    private readonly Dictionary<string, string> _activeSessions = [];
+    private readonly ConcurrentDictionary<string, string> _activeSessions = [];
     /// <summary>
     /// Creates a new session in the active sessions dictionary based on the username. returns the generated token as Data.
     /// </summary>
@@ -39,14 +40,8 @@ public class TokenService
     /// <returns></returns>
     public HandlerResult<string> EndSession(string token)
     {
-        try
-        {
-            _activeSessions.Remove(token);
-            return HandlerResult<string>.Ok("Token removed successfully");
-        }
-        catch (Exception ex)
-        {
-            return HandlerResult<string>.Error($"Failed to remove token {ex.Message}");
-        }
+            return _activeSessions.Remove(token, out var _)
+            ? HandlerResult<string>.Ok("Token removed successfully")
+            : HandlerResult<string>.Error($"Failed to remove token.");
     }
 }
