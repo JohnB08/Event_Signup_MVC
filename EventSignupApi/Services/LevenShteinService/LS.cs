@@ -116,4 +116,27 @@ public class LS
         //Etter siste swappet, er hele distansen flyttet til index = t.Length i v0, og vi kan returnere den ut. 
         return v0[accTarget.Length];
     }
+
+    /// <summary>
+    /// Async versjon av DistanceRec, tar inn en referanse til source og target, og gjør de om til spans.
+    /// </summary>
+    /// <param name="source">source string</param>
+    /// <param name="target">target string for comparison</param>
+    /// <returns>Task for å finne distance mellom source og target</returns>
+    public Task<int> DistanceRecAsync(string source, string target)
+    {
+        return Task.Run(()=>DistanceRec(source.AsSpan(), target.AsSpan()));
+    }
+
+    /// <summary>
+    /// Async versjon av DistanceIter, tar inn en referanse til source og target stirng
+    /// gjør de om til spans og comparer
+    /// </summary>
+    /// <param name="source">source string for comparison</param>
+    /// <param name="target">target string for comparison</param>
+    /// <returns>Task for å finne distance mellom source og target</returns>
+    public Task<int> DistanceIterAsync(string source, string target)
+    {
+        return Task.Run(()=>DistanceIter(source.AsSpan(), target.AsSpan()));
+    }
 }
