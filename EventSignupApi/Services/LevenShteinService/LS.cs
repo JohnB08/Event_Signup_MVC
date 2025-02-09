@@ -80,7 +80,7 @@ public class LS
 
         //Vi setter alle elementene i vektor 0 til index i, som skal brukes som basis for hvor mye det "koster" å appende en
         //bokstav fra en gitt posisjon i, fra target til source for å gjøre source lik target. 
-        for (int i = 0; i < accTarget.Length; i++)
+        for (int i = 0; i < accTarget.Length+1; i++)
         {
             v0[i] = i;
         }
