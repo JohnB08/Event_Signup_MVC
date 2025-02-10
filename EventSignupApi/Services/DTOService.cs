@@ -1,11 +1,10 @@
-using System;
-using System.Diagnostics.Eventing.Reader;
+using System.Globalization;
 using EventSignupApi.Models;
 using EventSignupApi.Models.DTO;
 
 namespace EventSignupApi.Services;
 
-public class EventDTOService
+public class EventDtoService
 {
     /// <summary>
     /// Creates a new event based on DTO and a User.
@@ -13,8 +12,9 @@ public class EventDTOService
     /// </summary>
     /// <param name="dto"></param>
     /// <param name="user"></param>
+    /// <param name="genre"></param>
     /// <returns></returns>
-    public Event GetNewEvent(EventDTO dto, User user, EventGenreLookupTable genre)
+    public static Event GetNewEvent(EventDTO dto, User user, EventGenreLookupTable genre)
     {
         var newEvent = new Event()
         {
@@ -27,7 +27,7 @@ public class EventDTOService
             Long = dto.LatLong[1],
             GenreId = genre.Id,
             Genre = genre,
-            EventDate = DateTime.TryParse(dto.Date, out DateTime dtoDate) ? dtoDate : DateTime.Now
+            EventDate = DateTime.TryParse(dto.Date, out var dtoDate) ? dtoDate : DateTime.Now
         };
         return newEvent;
     }
@@ -38,13 +38,13 @@ public class EventDTOService
     /// <param name="returnEvent"></param>
     /// <param name="canEdit"></param>
     /// <returns></returns>
-    public EventDTO MapEventToDto(Event returnEvent, bool canEdit = false)
+    public static EventDTO MapEventToDto(Event returnEvent, bool canEdit = false)
     {
         var dto = new EventDTO()
         {
             Id = returnEvent.EventId,
             EventName = returnEvent.EventName,
-            Date = returnEvent.EventDate.ToString(),
+            Date = returnEvent.EventDate.ToString(CultureInfo.InvariantCulture),
             Public = returnEvent.Public,
             Genre = returnEvent.Genre.Genre,
             CanEdit = canEdit,
@@ -59,7 +59,7 @@ public class EventDTOService
     /// <param name="e"></param>
     /// <param name="dto"></param>
     /// <param name="genre"></param>
-    public void MapDtoToEvent(Event e, EventDTO dto, EventGenreLookupTable genre)
+    public static void MapDtoToEvent(Event e, EventDTO dto, EventGenreLookupTable genre)
     {
         e.EventName = dto.EventName;
         e.EventDate = DateTime.Parse(dto.Date);

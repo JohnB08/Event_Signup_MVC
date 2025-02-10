@@ -14,7 +14,7 @@ public class TokenService
     /// <returns></returns>
     public string CreateSession(string username)
     {
-        string token = Guid.NewGuid().ToString();
+        var token = Guid.NewGuid().ToString();
         _activeSessions[token] = username;
         return token;
     }

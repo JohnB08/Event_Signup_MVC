@@ -1,5 +1,3 @@
-using System;
-using System.Linq.Expressions;
 using EventSignupApi.Context;
 using EventSignupApi.Models;
 using EventSignupApi.Models.DTO;
@@ -10,19 +8,15 @@ using Microsoft.EntityFrameworkCore;
 
 namespace EventSignupApi.Services;
 
-public class EventDataHandler(DatabaseContext context, EventDTOService dtoService, ILogger<EventDataHandler> logger, LS ls)
+public class EventDataHandler(DatabaseContext context, EventDtoService dtoService, LS ls)
 {
-    private readonly DatabaseContext _context = context;
-    private readonly EventDTOService _dtoService = dtoService;
-    private readonly ILogger<EventDataHandler> _logger = logger;
-    private readonly LS _ls = ls;
 
     /* Overload of GetEvents that gets all publicly viewable events, and sets editable to false by default */
     public HandlerResult<IEnumerable<EventDTO>> GetEvents()
     {
         try
         {
-            return HandlerResult<IEnumerable<EventDTO>>.Ok(_context.Events.Where(e=> e.Public == true).Include(e => e.Genre).Select(e => _dtoService.MapEventToDto(e, false)));
+            return HandlerResult<IEnumerable<EventDTO>>.Ok(context.Events.Where(e=> e.Public == true).Include(e => e.Genre).Select(e => EventDtoService.MapEventToDto(e, false)));
         }
         catch(Exception ex)
         {
@@ -41,11 +35,11 @@ public class EventDataHandler(DatabaseContext context, EventDTOService dtoServic
     {
         try
         {
-            return HandlerResult<IEnumerable<EventDTO>>.Ok(_context.Events
+            return HandlerResult<IEnumerable<EventDTO>>.Ok(context.Events
                                 .Include(e => e.Genre)
                                 .Include(e => e.Admins)
-                                .Where(e => e.Public || e.UserId == user.UserId || e.Admins.Any(a => a.UserId == user.UserId))
-                                .Select(e => _dtoService.MapEventToDto(e, e.UserId == user.UserId || e.Admins.Any(a => a.UserId == user.UserId))));
+                                .Where(e => e.Admins != null && (e.Public || e.UserId == user.UserId || e.Admins.Any(a => a.UserId == user.UserId)))
+                                .Select(e => EventDtoService.MapEventToDto(e, e.Admins != null && (e.UserId == user.UserId || e.Admins.Any(a => a.UserId == user.UserId)))));
         }
         catch (Exception ex)
         {
@@ -54,8 +48,8 @@ public class EventDataHandler(DatabaseContext context, EventDTOService dtoServic
     }
     public async Task<HandlerResult<EventDTO>> GetSingleEvent(int id, User user)
     {
-        var e = await _context.Events.Include(e=> e.Genre).Include(e => e.Admins).Include(e => e.Owner).Where(e => e.Owner.UserId == user.UserId && e.EventId == id).FirstOrDefaultAsync();
-        if (e != null && (e.Owner.UserId == user.UserId || e.Admins.Any(a => a.UserId == user.UserId))) return HandlerResult<EventDTO>.Ok(_dtoService.MapEventToDto(e, e.UserId == user.UserId || e.Admins.Any(a => a.UserId == user.UserId)));
+        var e = await context.Events.Include(e=> e.Genre).Include(e => e.Admins).Include(e => e.Owner).Where(e => e.Owner.UserId == user.UserId && e.EventId == id).FirstOrDefaultAsync();
+        if (e is { Admins: not null } && (e.Owner.UserId == user.UserId || e.Admins.Any(a => a.UserId == user.UserId))) return HandlerResult<EventDTO>.Ok(EventDtoService.MapEventToDto(e, e.UserId == user.UserId || e.Admins.Any(a => a.UserId == user.UserId)));
         return HandlerResult<EventDTO>.Error("Failed fetching user");
     }
     public async Task<HandlerResult<string>> PostNewEvent(EventDTO dto, User user)
@@ -63,11 +57,11 @@ public class EventDataHandler(DatabaseContext context, EventDTOService dtoServic
         try
         {   
             
-            var genreList = await _context.EventGenreLookup.ToListAsync();
+            var genreList = await context.EventGenreLookup.ToListAsync();
             var existingGenre = genreList.AsParallel()
                                                                 .Select(g => new {
                                                                     genreObj = g,
-                                                                    distance = _ls.DistanceRec(dto.Genre.ToLower().AsSpan(), g.Genre.ToLower().AsSpan())
+                                                                    distance = LS.DistanceRec(dto.Genre.ToLower().AsSpan(), g.Genre.ToLower().AsSpan())
                                                                 })
                                                                 .Where(x => x.distance < (x.genreObj.Genre.Length/2)+1)
                                                                 .OrderBy(x => x.distance)
@@ -76,24 +70,22 @@ public class EventDataHandler(DatabaseContext context, EventDTOService dtoServic
             if (existingGenre == null)
             {
                 var newGenre = new EventGenreLookupTable(){Genre = dto.Genre};
-                _context.EventGenreLookup.Add(newGenre);
-                _context.Events.Add(_dtoService.GetNewEvent(dto, user, newGenre));
-                await _context.SaveChangesAsync();
-                var e = await _context.Events.Where(e=> e.UserId == user.UserId).FirstOrDefaultAsync()!;
+                context.EventGenreLookup.Add(newGenre);
+                context.Events.Add(EventDtoService.GetNewEvent(dto, user, newGenre));
+                await context.SaveChangesAsync();
+                var e = await context.Events.Where(e=> e.UserId == user.UserId).FirstOrDefaultAsync();
                 user.EventId = e!.EventId;
                 user.OwnedEvent = e;
-                await _context.SaveChangesAsync();
             }
             else 
             {
-                _context.Events.Add(_dtoService.GetNewEvent(dto, user, existingGenre));
-                await _context.SaveChangesAsync();
-                var e = await _context.Events.Where(e=> e.UserId == user.UserId).FirstOrDefaultAsync()!;
+                context.Events.Add(EventDtoService.GetNewEvent(dto, user, existingGenre));
+                await context.SaveChangesAsync();
+                var e = await context.Events.Where(e=> e.UserId == user.UserId).FirstOrDefaultAsync();
                 user.EventId = e!.EventId;
                 user.OwnedEvent = e;
-                await _context.SaveChangesAsync();
             }
-            await _context.SaveChangesAsync();
+            await context.SaveChangesAsync();
             return HandlerResult<string>.Ok("Created new event!");
         }
         catch (Exception ex)
@@ -105,12 +97,12 @@ public class EventDataHandler(DatabaseContext context, EventDTOService dtoServic
     {
         try
         {
-            var existingEvent = await _context.Events.Where(e => e.EventId == eventId).FirstOrDefaultAsync();
-            var existingGenres = await _context.EventGenreLookup.ToListAsync();
+            var existingEvent = await context.Events.Where(e => e.EventId == eventId).FirstOrDefaultAsync();
+            var existingGenres = await context.EventGenreLookup.ToListAsync();
             var dtoGenre = existingGenres.AsParallel()
                                                                 .Select(g => new {
                                                                     genreObj = g,
-                                                                    distance = _ls.DistanceRec(dto.Genre.ToLower().AsSpan(), g.Genre.ToLower().AsSpan())
+                                                                    distance = LS.DistanceRec(dto.Genre.ToLower().AsSpan(), g.Genre.ToLower().AsSpan())
                                                                 })
                                                                 .Where(x => x.distance < (x.genreObj.Genre.Length/2)+1)
                                                                 .OrderBy(x => x.distance)
@@ -120,10 +112,10 @@ public class EventDataHandler(DatabaseContext context, EventDTOService dtoServic
             if (dtoGenre == null) 
             {
                 dtoGenre = new (){Genre = dto.Genre};
-                _context.Add(dtoGenre);
+                context.Add(dtoGenre);
             }
-            _dtoService.MapDtoToEvent(existingEvent!, dto, dtoGenre);
-            await _context.SaveChangesAsync();
+            EventDtoService.MapDtoToEvent(existingEvent!, dto, dtoGenre);
+            await context.SaveChangesAsync();
             return HandlerResult<string>.Ok("Successfully edited event.");
         } catch (Exception ex)
         {
@@ -134,9 +126,9 @@ public class EventDataHandler(DatabaseContext context, EventDTOService dtoServic
     {
         try
         {
-            var existingEvent = await _context.Events.Include(e=>e.Owner).Where(e => e.EventId == id && e.Owner.UserId == user.UserId).FirstOrDefaultAsync()!;
-            _context.Events.Remove(existingEvent!);
-            await _context.SaveChangesAsync();
+            var existingEvent = await context.Events.Include(e=>e.Owner).Where(e => e.EventId == id && e.Owner.UserId == user.UserId).FirstOrDefaultAsync();
+            context.Events.Remove(existingEvent!);
+            await context.SaveChangesAsync();
             return HandlerResult<string>.Ok("Event successfully deleted.");
         }
         catch (Exception ex)

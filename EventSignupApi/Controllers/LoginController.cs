@@ -1,9 +1,7 @@
-using System.Threading.Tasks;
 using EventSignupApi.Models;
 using EventSignupApi.Models.DTO;
 using EventSignupApi.Models.HandlerResult;
 using EventSignupApi.Services;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EventSignupApi.Controllers
@@ -12,20 +10,18 @@ namespace EventSignupApi.Controllers
     [ApiController]
     public class LoginController(IWebHostEnvironment env, UserHandler userHandler) : ControllerBase
     {
-        private readonly IWebHostEnvironment _env = env;
-        private readonly UserHandler _userHandler = userHandler;
         [HttpGet()]
         public IActionResult Get()
         {
-            return PhysicalFile(Path.Combine(_env.WebRootPath, "login.html"), "text/html");
+            return PhysicalFile(Path.Combine(env.WebRootPath, "login.html"), "text/html");
         }
         [HttpPost()]
         public async Task<IActionResult> Post([FromForm] UserDTO dto)
         {
-            var result = await _userHandler.ValidateUserDto(dto);
+            var result = await userHandler.ValidateUserDto(dto);
             if (result is HandlerResult<string>.Failure f) return Unauthorized(new {message = f.ErrorMessage});
 
-            string token = _userHandler.CreateSession(dto.UserName);
+            var token = userHandler.CreateSession(dto.UserName);
 
             var cookieOptions = new CookieOptions
             {
@@ -43,7 +39,7 @@ namespace EventSignupApi.Controllers
         {
             if (Request.Cookies.TryGetValue("session_token", out var sessionToken))
             {
-                return await _userHandler.ValidateSession(sessionToken) switch
+                return await userHandler.ValidateSession(sessionToken) switch
                 {
                     HandlerResult<User>.Success s => Ok(new {userName = s.Data.UserName}),
                     HandlerResult<User>.Failure f => Unauthorized(new {message = f.ErrorMessage}),
@@ -52,14 +48,12 @@ namespace EventSignupApi.Controllers
             }
             return Unauthorized(new {message = "no token"});
         }
-        [HttpPost("signout")]
-        public IActionResult Signout()
+        [HttpPost("SignOut")]
+        public IActionResult LogOut()
         {
-            if (Request.Cookies.TryGetValue("session_token", out var sessionToken))
-            {
-                _userHandler.EndSession(sessionToken);
-                Response.Cookies.Delete("session_token");
-            }
+            if (!Request.Cookies.TryGetValue("session_token", out var sessionToken)) return Redirect("/");
+            userHandler.EndSession(sessionToken);
+            Response.Cookies.Delete("session_token");
             return Redirect("/");
         }
     }

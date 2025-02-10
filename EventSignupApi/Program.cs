@@ -16,7 +16,7 @@ builder.Services.AddSwaggerGen();
 
 //Servicene her har ingen state knyttet direkte til seg, de representerer en samling metoder som skal kjøres på en eller flere modeller. De kan derfor implementeres som en transient service.
 //dvs vi lager og disposer en instans hver gang vi kaller den. 
-builder.Services.AddTransient<EventDTOService>();
+builder.Services.AddTransient<EventDtoService>();
 builder.Services.AddTransient<EventDataHandler>();
 builder.Services.AddTransient<UserDtoService>();
 builder.Services.AddTransient<UserHandler>();

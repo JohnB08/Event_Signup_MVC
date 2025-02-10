@@ -12,7 +12,7 @@ public class UserDtoService
     /// </summary>
     /// <param name="dto"></param>
     /// <returns></returns>
-    public User GetNewUser(UserDTO dto)
+    public static User GetNewUser(UserDTO dto)
     {
         return new User()
         {
@@ -26,22 +26,19 @@ public class UserDtoService
     /// </summary>
     /// <param name="password"></param>
     /// <returns></returns>
-    private string HashPassword(string password)
+    private static string HashPassword(string password)
     {
-        using(var encrypt = SHA256.Create())
-        {
-            var salt = Environment.GetEnvironmentVariable("PWSALT");
-            var bytes = Encoding.UTF8.GetBytes(password + salt);
-            var hash = encrypt.ComputeHash(bytes);
-            return Convert.ToHexString(hash);
-        }
+        var salt = Environment.GetEnvironmentVariable("PWSALT");
+        var bytes = Encoding.UTF8.GetBytes(password + salt);
+        var hash = SHA256.HashData(bytes);
+        return Convert.ToHexString(hash);
     }
     /// <summary>
     /// Returns a DTO with hashed values. 
     /// </summary>
     /// <param name="dto"></param>
     /// <returns></returns>
-    public UserDTO HashDTOValues(UserDTO dto)
+    public static UserDTO HashDtoValues(UserDTO dto)
     {
         return new UserDTO()
         {

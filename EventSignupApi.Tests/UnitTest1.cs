@@ -11,8 +11,7 @@ public class UnitTest1
     [InlineData("", "a", 1)]
     public void DistanceRec_ExpectedResults(string source, string target, int expected)
     {
-        var ls = new LS();
-        int actual = ls.DistanceRec(source.AsSpan(), target.AsSpan());
+        var actual = LS.DistanceRec(source.AsSpan(), target.AsSpan());
         Assert.Equal(expected, actual); 
     }
 
@@ -24,8 +23,7 @@ public class UnitTest1
     [InlineData("", "a", 1)]
     public void DistanceIter_ExpectedResults(string source, string target, int expected)
     {
-        var ls = new LS();
-        int actual = ls.DistanceIter(source.AsSpan(), target.AsSpan());
+        var actual = LS.DistanceIter(source.AsSpan(), target.AsSpan());
         Assert.Equal(expected, actual);
     }
     

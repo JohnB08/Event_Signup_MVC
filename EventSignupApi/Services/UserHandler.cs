@@ -23,10 +23,10 @@ public class UserHandler(DatabaseContext context, UserDtoService dtoService, Tok
     public async Task<HandlerResult<string>> CreateNewUser(UserDTO dto)
     {
         if (_context.Users.Any(u => u.UserName == dto.UserName))
-        return HandlerResult<string>.Error("Username allready taken");
+            return HandlerResult<string>.Error("Username already taken");
         try
         {
-            var newUser = _dtoService.GetNewUser(dto);
+            var newUser = UserDtoService.GetNewUser(dto);
             _context.Users.Add(newUser);
             await _context.SaveChangesAsync();
             var token  = _tokenService.CreateSession(newUser.UserName);
@@ -45,10 +45,9 @@ public class UserHandler(DatabaseContext context, UserDtoService dtoService, Tok
     /// <returns></returns>
     public async Task<HandlerResult<string>> ValidateUserDto(UserDTO dto)
     {
-        var hashedValues = _dtoService.HashDTOValues(dto);
+        var hashedValues = UserDtoService.HashDtoValues(dto);
         var existingUser = await _context.Users.Where(u => u.Hash == hashedValues.Password).FirstOrDefaultAsync();
-        if (existingUser == null) return HandlerResult<string>.Error("Missing user");
-        return HandlerResult<string>.Ok("User validated");
+        return existingUser == null ? HandlerResult<string>.Error("Missing user") : HandlerResult<string>.Ok("User validated");
     }
 
     /// <summary>
@@ -60,8 +59,7 @@ public class UserHandler(DatabaseContext context, UserDtoService dtoService, Tok
     private async Task<HandlerResult<User>> GetUser(string userName)
     {
         var user = await _context.Users.Where(u => u.UserName == userName).FirstOrDefaultAsync();
-        if (user == null) return HandlerResult<User>.Error("Missing user");
-        return HandlerResult<User>.Ok(user);
+        return user == null ? HandlerResult<User>.Error("Missing user") : HandlerResult<User>.Ok(user);
     }
     /// <summary>
     /// Creates a session using a UserName
