@@ -116,5 +116,42 @@ namespace EventSignupApi.Controllers
         {
             return PhysicalFile(Path.Combine(env.WebRootPath, "create.html"), "text/html");
         }
+
+        [HttpPost("subscribe/{id:int}")]
+        public async Task<IActionResult> Subscribe(int id)
+        {
+            if (!Request.Cookies.TryGetValue("session_token", out var token))
+                return Unauthorized(new {message = "No access to single event."});
+            var userResult = await userHandler.ValidateSession(token);
+            if (userResult is HandlerResult<User>.Success s)
+            {
+                return await eventDataHandler.SubscribeEvent(id, s.Data) switch
+                {
+                    HandlerResult<string>.Success su => Ok(su.Data),
+                    HandlerResult<string>.Failure f => StatusCode(500, new { message = f.ErrorMessage }),
+                    _ => StatusCode(500, new { message = "Something went wrong" })
+                };
+                
+            }
+            return Unauthorized(new {message = "Something went wrong"});
+        }
+
+        [HttpPost("unsubscribe/{id:int}")]
+        public async Task<IActionResult> Unsubscribe(int id)
+        {
+            if (!Request.Cookies.TryGetValue("session_token", out var token))
+                return Unauthorized(new {message = "No access to single event."});
+            var userResult = await userHandler.ValidateSession(token);
+            if (userResult is HandlerResult<User>.Success s)
+            {
+                return await eventDataHandler.UnsubscribeEvent(id, s.Data) switch
+                {
+                    HandlerResult<string>.Success su => Ok(su.Data),
+                    HandlerResult<string>.Failure f => StatusCode(500, new { message = f.ErrorMessage }),
+                    _ => StatusCode(500, new { message = "Something went wrong" })
+                };
+            }
+            return Unauthorized(new {message = "Something went wrong"});
+        }
     }
 }

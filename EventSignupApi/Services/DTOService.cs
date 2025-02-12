@@ -38,7 +38,7 @@ public class EventDtoService
     /// <param name="returnEvent"></param>
     /// <param name="canEdit"></param>
     /// <returns></returns>
-    public static EventDTO MapEventToDto(Event returnEvent, bool canEdit = false)
+    public static EventDTO MapEventToDto(Event returnEvent, bool canEdit = false, bool isSubscribed = false)
     {
         var dto = new EventDTO()
         {
@@ -49,7 +49,8 @@ public class EventDtoService
             Genre = returnEvent.Genre.Genre,
             CanEdit = canEdit,
             MaxAttendees = returnEvent.MaxAttendees,
-            LatLong = [returnEvent.Lat, returnEvent.Long]
+            LatLong = [returnEvent.Lat, returnEvent.Long],
+            IsSubscriber = isSubscribed
         };
         return dto;
     }

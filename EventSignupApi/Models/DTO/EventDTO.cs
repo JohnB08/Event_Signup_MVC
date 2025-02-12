@@ -13,6 +13,8 @@ public class EventDTO
     public bool Public {get;set;}
     [JsonPropertyName("canEdit")]
     public bool CanEdit {get;set;} = false;
+    [JsonPropertyName("isSubscriber")]
+    public bool IsSubscriber {get;set;} = false;
     [JsonPropertyName("genre")]
     public required string Genre {get;set;}
     [JsonPropertyName("maxAttendees")]

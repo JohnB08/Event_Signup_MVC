@@ -16,7 +16,7 @@ public class EventDataHandler(DatabaseContext context, EventDtoService dtoServic
     {
         try
         {
-            return HandlerResult<IEnumerable<EventDTO>>.Ok(context.Events.Where(e=> e.Public == true).Include(e => e.Genre).Select(e => EventDtoService.MapEventToDto(e, false)));
+            return HandlerResult<IEnumerable<EventDTO>>.Ok(context.Events.AsNoTracking().Where(e=> e.Public == true).Include(e => e.Genre).Select(e => EventDtoService.MapEventToDto(e, false, false)));
         }
         catch(Exception ex)
         {
@@ -36,10 +36,14 @@ public class EventDataHandler(DatabaseContext context, EventDtoService dtoServic
         try
         {
             return HandlerResult<IEnumerable<EventDTO>>.Ok(context.Events
+                                .AsNoTracking()
                                 .Include(e => e.Genre)
                                 .Include(e => e.Admins)
+                                .Include(e => e.Owner)
+                                .Include(e => e.SignUps)
+                                .AsEnumerable()
                                 .Where(e => e.Admins != null && (e.Public || e.UserId == user.UserId || e.Admins.Any(a => a.UserId == user.UserId)))
-                                .Select(e => EventDtoService.MapEventToDto(e, e.Admins != null && (e.UserId == user.UserId || e.Admins.Any(a => a.UserId == user.UserId)))));
+                                .Select(e => EventDtoService.MapEventToDto(e, e.Admins != null && (e.UserId == user.UserId || e.Admins.Any(a => a.UserId == user.UserId)), e.SignUps != null && e.SignUps.Any(u => u.UserId == user.UserId))));
         }
         catch (Exception ex)
         {
@@ -48,7 +52,7 @@ public class EventDataHandler(DatabaseContext context, EventDtoService dtoServic
     }
     public async Task<HandlerResult<EventDTO>> GetSingleEvent(int id, User user)
     {
-        var e = await context.Events.Include(e=> e.Genre).Include(e => e.Admins).Include(e => e.Owner).Where(e => e.Owner.UserId == user.UserId && e.EventId == id).FirstOrDefaultAsync();
+        var e = await context.Events.AsNoTracking().Include(e=> e.Genre).Include(e => e.Admins).Include(e => e.Owner).Where(e => e.Owner.UserId == user.UserId && e.EventId == id).FirstOrDefaultAsync();
         if (e is { Admins: not null } && (e.Owner.UserId == user.UserId || e.Admins.Any(a => a.UserId == user.UserId))) return HandlerResult<EventDTO>.Ok(EventDtoService.MapEventToDto(e, e.UserId == user.UserId || e.Admins.Any(a => a.UserId == user.UserId)));
         return HandlerResult<EventDTO>.Error("Failed fetching user");
     }
@@ -136,5 +140,39 @@ public class EventDataHandler(DatabaseContext context, EventDtoService dtoServic
             return HandlerResult<string>.Error($"Failed to delete event {ex.Message}");
         }
 
+    }
+
+    public async Task<HandlerResult<string>> SubscribeEvent(int id, User user)
+    {
+        try
+        {
+            var existingEvent = await context.Events.Where(e => e.EventId == id).Include(e => e.SignUps).FirstOrDefaultAsync();
+            existingEvent.SignUps.Add(user);
+            var existingUser = await context.Users.Where(u => u.UserId == user.UserId).Include(u => u.SignUpEvents).FirstOrDefaultAsync();
+            existingUser.SignUpEvents.Add(existingEvent);
+            await context.SaveChangesAsync();
+            return HandlerResult<string>.Ok("Event successfully subscribed.");
+        }
+        catch (Exception e)
+        {
+            return HandlerResult<string>.Error($"Failed to subscribe event, {e.Message}");
+        }
+    }
+
+    public async Task<HandlerResult<string>> UnsubscribeEvent(int id, User user)
+    {
+        try
+        {
+            var existingEvent = await context.Events.Where(e => e.EventId == id).Include(e => e.SignUps).FirstOrDefaultAsync();
+            existingEvent.SignUps!.Remove(user);
+            var existingUser = await context.Users.Where(u => u.UserId == user.UserId).Include(u => u.SignUpEvents).FirstOrDefaultAsync();
+            existingUser.SignUpEvents.Remove(existingEvent);
+            await context.SaveChangesAsync();
+            return HandlerResult<string>.Ok("Event successfully unsubscribed.");
+        }
+        catch (Exception e)
+        {
+            return HandlerResult<string>.Error($"Failed to unsubscribe event, {e.Message}");
+        }
     }
 }

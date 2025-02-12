@@ -59,6 +59,34 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
             eventElement.appendChild(deleteButton);
         }
+        if (user)
+        {
+            const subButton = document.createElement('button');
+            if (event.isSubscriber)
+            {
+                subButton.textContent = 'UnSubscribe';
+                subButton.onclick = async() => {
+                    const response = await fetch(`event/unsubscribe/${event.id}`, {
+                        method: 'POST',
+                        credentials: 'include'
+                    })
+                    if (response.ok) window.location.reload();
+                }
+                
+            }
+            else
+            {
+                subButton.textContent = 'Subscribe';
+                subButton.onclick = async() => {
+                    const response = await fetch(`event/subscribe/${event.id}`, {
+                        method: 'POST',
+                        credentials: 'include'
+                    })
+                    if (response.ok) window.location.reload();
+                }
+            }
+            eventElement.appendChild(subButton);
+        }
 
         eventsList.appendChild(eventElement);
     });
