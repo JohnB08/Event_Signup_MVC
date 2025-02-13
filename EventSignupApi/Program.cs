@@ -20,7 +20,7 @@ builder.Services.AddTransient<EventDtoService>();
 builder.Services.AddTransient<EventDataHandler>();
 builder.Services.AddTransient<UserDtoService>();
 builder.Services.AddTransient<UserHandler>();
-builder.Services.AddTransient<LS>();
+builder.Services.AddTransient<Ls>();
 
 //TokenService skal holde oversikt over aktive sessions, denne staten skal helst holdes i livet over hele livssyklussen til appen vår, og bør derfor implementeres som en singleton.
 builder.Services.AddSingleton<TokenService>();

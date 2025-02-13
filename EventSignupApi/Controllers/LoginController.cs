@@ -16,7 +16,7 @@ namespace EventSignupApi.Controllers
             return PhysicalFile(Path.Combine(env.WebRootPath, "login.html"), "text/html");
         }
         [HttpPost()]
-        public async Task<IActionResult> Post([FromForm] UserDTO dto)
+        public async Task<IActionResult> Post([FromForm] UserDto dto)
         {
             var result = await userHandler.ValidateUserDto(dto);
             if (result is HandlerResult<string>.Failure f) return Unauthorized(new {message = f.ErrorMessage});

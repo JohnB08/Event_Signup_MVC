@@ -15,8 +15,8 @@ namespace EventSignupApi.Controllers
             if (!Request.Cookies.TryGetValue("session_token", out var token))
                 return eventDataHandler.GetEvents() switch
                 {
-                    HandlerResult<IEnumerable<EventDTO>>.Success s => Ok(s.Data),
-                    HandlerResult<IEnumerable<EventDTO>>.Failure f => StatusCode(500, new { message = f.ErrorMessage }),
+                    HandlerResult<IEnumerable<EventDto>>.Success s => Ok(s.Data),
+                    HandlerResult<IEnumerable<EventDto>>.Failure f => StatusCode(500, new { message = f.ErrorMessage }),
                     _ => StatusCode(500, new { message = "Something went wrong" })
                 };
             var userResult = await userHandler.ValidateSession(token);
@@ -24,15 +24,15 @@ namespace EventSignupApi.Controllers
             {
                 return eventDataHandler.GetEvents(success.Data) switch
                 {
-                    HandlerResult<IEnumerable<EventDTO>>.Success s => Ok(s.Data),
-                    HandlerResult<IEnumerable<EventDTO>>.Failure f => StatusCode(500, new {message = f.ErrorMessage}),
+                    HandlerResult<IEnumerable<EventDto>>.Success s => Ok(s.Data),
+                    HandlerResult<IEnumerable<EventDto>>.Failure f => StatusCode(500, new {message = f.ErrorMessage}),
                     _ => StatusCode(500, new {message = "something went wrong"})
                 };
             }
             return eventDataHandler.GetEvents() switch
             {
-                    HandlerResult<IEnumerable<EventDTO>>.Success s => Ok(s.Data),
-                    HandlerResult<IEnumerable<EventDTO>>.Failure f => StatusCode(500, new {message = f.ErrorMessage}),
+                    HandlerResult<IEnumerable<EventDto>>.Success s => Ok(s.Data),
+                    HandlerResult<IEnumerable<EventDto>>.Failure f => StatusCode(500, new {message = f.ErrorMessage}),
                     _ => StatusCode(500, new {message = "Something went wrong"})
             };
         }
@@ -48,8 +48,8 @@ namespace EventSignupApi.Controllers
             {
                 return await eventDataHandler.GetSingleEvent(id, s.Data) switch
                 {
-                    HandlerResult<EventDTO>.Success su => Ok(su.Data),
-                    HandlerResult<EventDTO>.Failure f => StatusCode(500, new {message = f.ErrorMessage}),
+                    HandlerResult<EventDto>.Success su => Ok(su.Data),
+                    HandlerResult<EventDto>.Failure f => StatusCode(500, new {message = f.ErrorMessage}),
                     _ => StatusCode(500, new {message = "something went wrong"})
                 };
             }
@@ -76,7 +76,7 @@ namespace EventSignupApi.Controllers
             return StatusCode(500, new {message = "Something went wrong"});
         }
         [HttpPost]
-        public async Task<IActionResult> Post([FromBody] EventDTO dto)
+        public async Task<IActionResult> Post([FromBody] EventDto dto)
         {
             if (!Request.Cookies.TryGetValue("session_token", out var token))
                 return Unauthorized(new { message = "Missing session token" });
@@ -98,7 +98,7 @@ namespace EventSignupApi.Controllers
             return PhysicalFile(Path.Combine(env.WebRootPath, "edit.html"), "text/html");
         }
         [HttpPatch("edit/{id:int}")]
-        public async Task<IActionResult> PatchEvent([FromRoute]int id, [FromBody] EventDTO dto)
+        public async Task<IActionResult> PatchEvent([FromRoute]int id, [FromBody] EventDto dto)
         {
             if (!Request.Cookies.TryGetValue("session_token", out var _))
             {

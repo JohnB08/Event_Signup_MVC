@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace EventSignupApi.Models.DTO;
 
-public class EventDTO
+public class EventDto
 {
     [JsonPropertyName("eventName")]
     public required string EventName {get;set;}

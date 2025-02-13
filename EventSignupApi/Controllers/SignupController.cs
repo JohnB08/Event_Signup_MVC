@@ -17,7 +17,7 @@ namespace EventSignupApi.Controllers
             return PhysicalFile(Path.Combine(_env.WebRootPath,"signup.html"), "text/html");
         }
         [HttpPost()]
-        public async Task<IActionResult> Post([FromForm] UserDTO dto)
+        public async Task<IActionResult> Post([FromForm] UserDto dto)
         {
             var result = await _userHandler.CreateNewUser(dto);
             switch (result)

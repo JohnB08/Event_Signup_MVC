@@ -6,12 +6,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace EventSignupApi.Services;
 
-public class UserHandler(DatabaseContext context, UserDtoService dtoService, TokenService tokenService)
-{   
-    private readonly DatabaseContext _context = context;
-    private readonly UserDtoService _dtoService = dtoService;
-    
-    private readonly TokenService _tokenService = tokenService;
+public class UserHandler(DatabaseContext context, TokenService tokenService)
+{
 
     /// <summary>
     /// Creates a new user based on DTO
@@ -20,16 +16,16 @@ public class UserHandler(DatabaseContext context, UserDtoService dtoService, Tok
     /// </summary>
     /// <param name="dto"></param>
     /// <returns></returns>
-    public async Task<HandlerResult<string>> CreateNewUser(UserDTO dto)
+    public async Task<HandlerResult<string>> CreateNewUser(UserDto dto)
     {
-        if (_context.Users.Any(u => u.UserName == dto.UserName))
+        if (context.Users.Any(u => u.UserName == dto.UserName))
             return HandlerResult<string>.Error("Username already taken");
         try
         {
             var newUser = UserDtoService.GetNewUser(dto);
-            _context.Users.Add(newUser);
-            await _context.SaveChangesAsync();
-            var token  = _tokenService.CreateSession(newUser.UserName);
+            context.Users.Add(newUser);
+            await context.SaveChangesAsync();
+            var token  = tokenService.CreateSession(newUser.UserName);
             return HandlerResult<string>.Ok(token);
         }
         catch (Exception ex)
@@ -43,10 +39,10 @@ public class UserHandler(DatabaseContext context, UserDtoService dtoService, Tok
     /// </summary>
     /// <param name="dto"></param>
     /// <returns></returns>
-    public async Task<HandlerResult<string>> ValidateUserDto(UserDTO dto)
+    public async Task<HandlerResult<string>> ValidateUserDto(UserDto dto)
     {
         var hashedValues = UserDtoService.HashDtoValues(dto);
-        var existingUser = await _context.Users.Where(u => u.Hash == hashedValues.Password).FirstOrDefaultAsync();
+        var existingUser = await context.Users.Where(u => u.Hash == hashedValues.Password).FirstOrDefaultAsync();
         return existingUser == null ? HandlerResult<string>.Error("Missing user") : HandlerResult<string>.Ok("User validated");
     }
 
@@ -58,7 +54,7 @@ public class UserHandler(DatabaseContext context, UserDtoService dtoService, Tok
     /// <returns></returns>
     private async Task<HandlerResult<User>> GetUser(string userName)
     {
-        var user = await _context.Users.Where(u => u.UserName == userName).FirstOrDefaultAsync();
+        var user = await context.Users.Where(u => u.UserName == userName).FirstOrDefaultAsync();
         return user == null ? HandlerResult<User>.Error("Missing user") : HandlerResult<User>.Ok(user);
     }
     /// <summary>
@@ -68,7 +64,7 @@ public class UserHandler(DatabaseContext context, UserDtoService dtoService, Tok
     /// <returns></returns>
     public string CreateSession(string userName)
     {
-        return _tokenService.CreateSession(userName);
+        return tokenService.CreateSession(userName);
     }
     /// <summary>
     /// Returns a User as Data after validating a token
@@ -77,7 +73,7 @@ public class UserHandler(DatabaseContext context, UserDtoService dtoService, Tok
     /// <returns></returns>
     public async Task<HandlerResult<User>> ValidateSession(string token)
     {
-        var tokenResult = _tokenService.ValidateSession(token);
+        var tokenResult = tokenService.ValidateSession(token);
         return tokenResult switch
         {
             HandlerResult<string>.Success success => await GetUser(success.Data),
@@ -92,6 +88,6 @@ public class UserHandler(DatabaseContext context, UserDtoService dtoService, Tok
     /// <returns></returns>
     public HandlerResult<string> EndSession(string token)
     {
-        return  _tokenService.EndSession(token);
+        return  tokenService.EndSession(token);
     }
 }

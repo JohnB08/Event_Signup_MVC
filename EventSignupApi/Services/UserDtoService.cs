@@ -12,7 +12,7 @@ public class UserDtoService
     /// </summary>
     /// <param name="dto"></param>
     /// <returns></returns>
-    public static User GetNewUser(UserDTO dto)
+    public static User GetNewUser(UserDto dto)
     {
         return new User()
         {
@@ -38,9 +38,9 @@ public class UserDtoService
     /// </summary>
     /// <param name="dto"></param>
     /// <returns></returns>
-    public static UserDTO HashDtoValues(UserDTO dto)
+    public static UserDto HashDtoValues(UserDto dto)
     {
-        return new UserDTO()
+        return new UserDto()
         {
             UserName = dto.UserName,
             Password = HashPassword(dto.Password)

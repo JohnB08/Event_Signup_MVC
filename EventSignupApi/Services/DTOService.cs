@@ -14,7 +14,7 @@ public class EventDtoService
     /// <param name="user"></param>
     /// <param name="genre"></param>
     /// <returns></returns>
-    public static Event GetNewEvent(EventDTO dto, User user, EventGenreLookupTable genre)
+    public static Event GetNewEvent(EventDto dto, User user, EventGenreLookupTable genre)
     {
         var newEvent = new Event()
         {
@@ -38,9 +38,9 @@ public class EventDtoService
     /// <param name="returnEvent"></param>
     /// <param name="canEdit"></param>
     /// <returns></returns>
-    public static EventDTO MapEventToDto(Event returnEvent, bool canEdit = false, bool isSubscribed = false)
+    public static EventDto MapEventToDto(Event returnEvent, bool canEdit = false, bool isSubscribed = false)
     {
-        var dto = new EventDTO()
+        var dto = new EventDto()
         {
             Id = returnEvent.EventId,
             EventName = returnEvent.EventName,
@@ -60,7 +60,7 @@ public class EventDtoService
     /// <param name="e"></param>
     /// <param name="dto"></param>
     /// <param name="genre"></param>
-    public static void MapDtoToEvent(Event e, EventDTO dto, EventGenreLookupTable genre)
+    public static void MapDtoToEvent(Event e, EventDto dto, EventGenreLookupTable genre)
     {
         e.EventName = dto.EventName;
         e.EventDate = DateTime.Parse(dto.Date);

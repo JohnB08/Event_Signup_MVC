@@ -2,7 +2,7 @@
 
 namespace EventSignupApi.Services.LevenShteinService;
 
-public class LS
+public class Ls
 {
     /// <summary>
     /// Implementasjon av Wikipedia sin formel for Levenshtein distanser
