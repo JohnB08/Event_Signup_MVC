@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (user) {
         const signoutButton = document.createElement("button");
         signoutButton.id = "logout-button";
-        signoutButton.textContent = "Sign out!";
+        signoutButton.textContent = `Sign out ${user.userName}!`;
         signoutButton.addEventListener('click', async () => {
             await fetch('/Login/SignOut', {
                 method: 'POST',
